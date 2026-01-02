@@ -1,8 +1,3 @@
-# Tables
-Basic for dev, will update with all fields later
-
-## Database Schema
-```sql
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Users table
@@ -91,26 +86,3 @@ CREATE TRIGGER trg_pesticide_type_check
 BEFORE INSERT OR UPDATE ON pesticides
 FOR EACH ROW
 EXECUTE FUNCTION enforce_pesticide_form();
-```
-
-# Routes
-```ts
-POST   "/forms/pesticide"
-POST   "/forms/shrub"  
-GET    "/forms"  
-GET    "/forms/{id}"  
-PUT    "/forms/{id}"  
-DELETE "/forms/{id}"  
-GET    "/forms/{id}/pdf"
-POST   "/forms/import/pdf"  
-```
-
-# User
-Forms will sort by:
-* `first_name`
-* `last_name`
-* `created_at`<br>
-Forms will filter by:
-* `first_name`
-* `last_name`
-* `created_at`<br>

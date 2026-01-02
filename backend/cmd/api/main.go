@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/db"
+	"github.com/joho/godotenv"
 )
 
 type APIResponse struct {
@@ -40,10 +44,23 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mux := http.NewServeMux()
+	if err := godotenv.Load(); err != nil {
+		log.Println("no .env file found")
+	}
 
+	database, err := db.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer database.Close()
+
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", jsonHandler)
 
-	log.Println("listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	if err := database.Ping(); err != nil {
+		log.Printf("Error: %s\n", err)
+		return
+	}
+	log.Println("listening on :8080, Database Connected!")
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), mux))
 }
