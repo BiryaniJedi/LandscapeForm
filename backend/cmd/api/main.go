@@ -47,6 +47,10 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("no .env file found")
 	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	database, err := db.New()
 	if err != nil {
@@ -57,10 +61,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", jsonHandler)
 
-	if err := database.Ping(); err != nil {
-		log.Printf("Error: %s\n", err)
-		return
-	}
-	log.Println("listening on :8080, Database Connected!")
+	log.Printf("listening on localhost:%s, Database Connected!\n", port)
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), mux))
 }

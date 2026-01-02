@@ -19,12 +19,12 @@ CREATE TABLE forms (
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     form_type TEXT NOT NULL CHECK (form_type IN ('shrub', 'pesticide')),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Client info
     first_name TEXT NOT NULL,
     last_name  TEXT NOT NULL,
-    home_phone TEXT NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    home_phone TEXT NOT NULL
 );
 
 -- Shrubs table
