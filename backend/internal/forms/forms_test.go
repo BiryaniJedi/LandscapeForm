@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/db"
 )
 
 func TestMain(m *testing.M) {
@@ -34,7 +35,7 @@ func createTestUser(t *testing.T, db *sql.DB) string {
 func TestCreateAndGetShrubForm(t *testing.T) {
 	ctx := context.Background()
 
-	db := testDB(t) // assumes your existing testDB helper
+	db := db.TestDB(t) // assumes your existing db.TestDB helper
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -71,7 +72,7 @@ func TestCreateAndGetShrubForm(t *testing.T) {
 
 func TestCreateShrubForm_NilDetails(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -93,7 +94,7 @@ func TestCreateShrubForm_NilDetails(t *testing.T) {
 
 func TestCreateAndGetPesticideForm(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -131,7 +132,7 @@ func TestCreateAndGetPesticideForm(t *testing.T) {
 
 func TestCreatePesticideForm_NilDetails(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -153,7 +154,7 @@ func TestCreatePesticideForm_NilDetails(t *testing.T) {
 
 func TestListFormsByUserId_Empty(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -165,7 +166,7 @@ func TestListFormsByUserId_Empty(t *testing.T) {
 
 func TestListFormsByUserId_MultipleForms(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -209,7 +210,7 @@ func TestListFormsByUserId_MultipleForms(t *testing.T) {
 
 func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -267,7 +268,7 @@ func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 
 func TestListFormsByUserId_SortByLastName(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -306,7 +307,7 @@ func TestListFormsByUserId_SortByLastName(t *testing.T) {
 
 func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	// Create two users
@@ -357,7 +358,7 @@ func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 
 func TestGetFormById_NotFound(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -370,7 +371,7 @@ func TestGetFormById_NotFound(t *testing.T) {
 
 func TestGetFormById_WrongUser(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	// Create user 1 and their form
@@ -396,7 +397,7 @@ func TestGetFormById_WrongUser(t *testing.T) {
 
 func TestUpdateFormById_ShrubForm(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -436,7 +437,7 @@ func TestUpdateFormById_ShrubForm(t *testing.T) {
 
 func TestUpdateFormById_PesticideForm(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -473,7 +474,7 @@ func TestUpdateFormById_PesticideForm(t *testing.T) {
 
 func TestUpdateFormById_WrongUser(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	// Create user 1 and their form
@@ -510,7 +511,7 @@ func TestUpdateFormById_WrongUser(t *testing.T) {
 
 func TestUpdateFormById_MissingDetails(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -543,7 +544,7 @@ func TestUpdateFormById_MissingDetails(t *testing.T) {
 
 func TestUpdateFormById_BothDetails(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -575,7 +576,7 @@ func TestUpdateFormById_BothDetails(t *testing.T) {
 
 func TestDeleteFormById_Success(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
@@ -607,7 +608,7 @@ func TestDeleteFormById_Success(t *testing.T) {
 
 func TestDeleteFormById_WrongUser(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	// Create user 1 and their form
@@ -637,7 +638,7 @@ func TestDeleteFormById_WrongUser(t *testing.T) {
 
 func TestDeleteFormById_NotFound(t *testing.T) {
 	ctx := context.Background()
-	db := testDB(t)
+	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
