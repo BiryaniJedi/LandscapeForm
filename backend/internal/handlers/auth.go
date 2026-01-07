@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -88,6 +89,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set token as HttpOnly cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400, // 24 hours
+	})
+
 	// Prepare response (don't include password hash)
 	userResponse := FullUserResponse{
 		ID:        user.ID,
@@ -129,6 +141,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Password:  req.Password,
 	})
 	if err != nil {
+		fmt.Printf("User id test error: %s\n", user.ID)
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusUnauthorized, "Invalid credentials")
 			return
@@ -149,6 +162,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set token as HttpOnly cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400, // 24 hours
+	})
+
 	// Prepare response (don't include password hash)
 	userResponse := FullUserResponse{
 		ID:        userFull.ID,
@@ -165,5 +189,23 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, LoginOrRegisterResponse{
 		Token: token,
 		User:  userResponse,
+	})
+}
+
+// Logout handles POST /api/auth/logout
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	// Clear the auth cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1, // Immediately expire
+	})
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Logged out successfully",
 	})
 }

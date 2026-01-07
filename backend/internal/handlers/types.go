@@ -59,7 +59,7 @@ type CreateOrUpdateUserRequest struct {
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	DoB       time.Time `json:"date_of_birth"`
-	Username  string    `json:"user_name"`
+	Username  string    `json:"username"`
 	Password  string    `json:"password"`
 }
 
@@ -78,7 +78,7 @@ type FullUserResponse struct {
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	DoB       time.Time `json:"date_of_birth"`
-	Username  string    `json:"user_name"`
+	Username  string    `json:"username"`
 }
 
 type ListUsersResponse struct {

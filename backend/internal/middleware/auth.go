@@ -16,23 +16,31 @@ import (
 func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Extract token from Authorization header
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				w.Header().Set("Content-Type", "application/json")
-				http.Error(w, `{"error":"Unauthorized","message":"Missing authorization header"}`, http.StatusUnauthorized)
-				return
-			}
+			var token string
 
-			// Expected format: "Bearer <token>"
-			parts := strings.Split(authHeader, " ")
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				w.Header().Set("Content-Type", "application/json")
-				http.Error(w, `{"error":"Unauthorized","message":"Invalid authorization header format"}`, http.StatusUnauthorized)
-				return
-			}
+			// Try to get token from cookie first
+			cookie, err := r.Cookie("auth_token")
+			if err == nil {
+				token = cookie.Value
+			} else {
+				// Fall back to Authorization header
+				authHeader := r.Header.Get("Authorization")
+				if authHeader == "" {
+					w.Header().Set("Content-Type", "application/json")
+					http.Error(w, `{"error":"Unauthorized","message":"Missing authorization"}`, http.StatusUnauthorized)
+					return
+				}
 
-			token := parts[1]
+				// Expected format: "Bearer <token>"
+				parts := strings.Split(authHeader, " ")
+				if len(parts) != 2 || parts[0] != "Bearer" {
+					w.Header().Set("Content-Type", "application/json")
+					http.Error(w, `{"error":"Unauthorized","message":"Invalid authorization header format"}`, http.StatusUnauthorized)
+					return
+				}
+
+				token = parts[1]
+			}
 
 			// Validate JWT token to get user ID
 			claims, err := auth.ValidateToken(token)

@@ -59,7 +59,7 @@ func (r *UsersRepository) CreateUser(
 	if err != nil {
 		return UserRepResponse{}, fmt.Errorf("Error hashing password: %v", err)
 	}
-
+	fmt.Printf("userInput: %+v\n", userInput)
 	var res UserRepResponse
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO users (
@@ -83,11 +83,12 @@ func (r *UsersRepository) CreateUser(
 		&res.UpdatedAt,
 	)
 	if err != nil {
-		return UserRepResponse{}, err
+		fmt.Printf("Create user query error: %v\n", err)
+		return UserRepResponse{ID: "0"}, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return UserRepResponse{}, err
+		return UserRepResponse{ID: "1"}, err
 	}
 
 	return res, nil

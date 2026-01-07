@@ -48,8 +48,9 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 	r.Get("/health", healthHandler)
 
 	// Authentication routes (public)
-	r.Post("/api/auth/login", authHandler.Login) // POST /api/auth/login
-	r.Post("/api/auth/register", authHandler.Register)
+	r.Post("/api/auth/login", authHandler.Login)       // POST /api/auth/login
+	r.Post("/api/auth/register", authHandler.Register) // POST /api/auth/register
+	r.Post("/api/auth/logout", authHandler.Logout)     // POST /api/auth/logout
 
 	/*// User registration (public)
 	r.Post("/api/users", usersHandler.CreateUser) // POST /api/users
