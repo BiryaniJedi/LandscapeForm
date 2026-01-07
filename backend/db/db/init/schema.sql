@@ -3,13 +3,19 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    pending BOOLEAN NOT NULL DEFAULT TRUE,
+    role TEXT NOT NULL DEFAULT 'employee',
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    date_of_birth DATE NOT NULL DEFAULT '2000-01-01',
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL
 );
 
 -- Forms table
 CREATE TABLE forms (
-    -- Form info
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -54,6 +60,11 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_forms_updated
 BEFORE UPDATE ON forms
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_users_updated
+BEFORE UPDATE ON users 
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 

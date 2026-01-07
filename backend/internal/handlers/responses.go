@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/forms"
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/users"
 )
 
 // respondJSON writes a JSON response with the given status code
@@ -61,4 +62,18 @@ func formViewToResponse(view *forms.FormView) FormResponse {
 	}
 
 	return resp
+}
+
+func UserRepoToFullResponse(user users.GetUserResponse) FullUserResponse {
+	return FullUserResponse{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Pending:   user.Pending,
+		Role:      user.Role,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		DoB:       user.DateOfBirth,
+		Username:  user.Username,
+	}
 }

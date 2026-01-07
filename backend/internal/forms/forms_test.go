@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/db"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
-	"github.com/BiryaniJedi/LandscapeForm-backend/internal/db"
 )
 
 func TestMain(m *testing.M) {
@@ -23,8 +23,8 @@ func createTestUser(t *testing.T, db *sql.DB) string {
 
 	var id string
 	err := db.QueryRow(`
-		INSERT INTO users (email)
-		VALUES ('test@example.com')
+		INSERT INTO users (first_name, last_name, username, password_hash)
+		VALUES ('Test', 'User', 'TestUserName1', 'TestPass')
 		RETURNING id
 	`).Scan(&id)
 
@@ -158,8 +158,12 @@ func TestListFormsByUserId_Empty(t *testing.T) {
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
+	listOptions := ListFormsOptions{
+		SortBy: "created_at",
+		Order:  "DESC",
+	}
 
-	forms, err := repo.ListFormsByUserId(ctx, userID, "created_at", "DESC")
+	forms, err := repo.ListFormsByUserId(ctx, userID, listOptions)
 	require.NoError(t, err)
 	require.Empty(t, forms)
 }
@@ -198,7 +202,11 @@ func TestListFormsByUserId_MultipleForms(t *testing.T) {
 	}, &ShrubDetails{NumShrubs: 10})
 	require.NoError(t, err)
 
-	forms, err := repo.ListFormsByUserId(ctx, userID, "created_at", "ASC")
+	listOptions := ListFormsOptions{
+		SortBy: "created_at",
+		Order:  "DESC",
+	}
+	forms, err := repo.ListFormsByUserId(ctx, userID, listOptions)
 	require.NoError(t, err)
 	require.Len(t, forms, 3)
 
@@ -241,7 +249,12 @@ func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 	require.NoError(t, err)
 
 	// Sort by first_name ASC
-	forms, err := repo.ListFormsByUserId(ctx, userID, "first_name", "ASC")
+
+	listOptions := ListFormsOptions{
+		SortBy: "first_name",
+		Order:  "ASC",
+	}
+	forms, err := repo.ListFormsByUserId(ctx, userID, listOptions)
 	require.NoError(t, err)
 	require.Len(t, forms, 3)
 
@@ -258,7 +271,8 @@ func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 	require.Equal(t, "Zoe", getFirstName(forms[2]))
 
 	// Sort by first_name DESC
-	forms, err = repo.ListFormsByUserId(ctx, userID, "first_name", "DESC")
+	listOptions.Order = "DESC"
+	forms, err = repo.ListFormsByUserId(ctx, userID, listOptions)
 	require.NoError(t, err)
 	require.Len(t, forms, 3)
 	require.Equal(t, "Zoe", getFirstName(forms[0]))
@@ -289,7 +303,11 @@ func TestListFormsByUserId_SortByLastName(t *testing.T) {
 	}, &PesticideDetails{PesticideName: "Bug Killer"})
 	require.NoError(t, err)
 
-	forms, err := repo.ListFormsByUserId(ctx, userID, "last_name", "ASC")
+	listOptions := ListFormsOptions{
+		SortBy: "last_name",
+		Order:  "ASC",
+	}
+	forms, err := repo.ListFormsByUserId(ctx, userID, listOptions)
 	require.NoError(t, err)
 	require.Len(t, forms, 2)
 
@@ -314,7 +332,11 @@ func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 	user1ID := createTestUser(t, db)
 
 	var user2ID string
-	err := db.QueryRow(`INSERT INTO users (email) VALUES ('user2@example.com') RETURNING id`).Scan(&user2ID)
+	err := db.QueryRow(`
+		INSERT INTO users (first_name, last_name, username, password_hash)
+		VALUES ('Test', 'User', 'TestUserName2', 'TestPass')
+		RETURNING id
+	`).Scan(&user2ID)
 	require.NoError(t, err)
 
 	// User 1 creates a form
@@ -344,13 +366,13 @@ func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 	}
 
 	// User 1 should only see their own form
-	user1Forms, err := repo.ListFormsByUserId(ctx, user1ID, "created_at", "DESC")
+	user1Forms, err := repo.ListFormsByUserId(ctx, user1ID, ListFormsOptions{SortBy: "created_at", Order: "DESC"})
 	require.NoError(t, err)
 	require.Len(t, user1Forms, 1)
 	require.Equal(t, "User1", getFirstName(user1Forms[0]))
 
 	// User 2 should only see their own form
-	user2Forms, err := repo.ListFormsByUserId(ctx, user2ID, "created_at", "DESC")
+	user2Forms, err := repo.ListFormsByUserId(ctx, user2ID, ListFormsOptions{SortBy: "created_at", Order: "DESC"})
 	require.NoError(t, err)
 	require.Len(t, user2Forms, 1)
 	require.Equal(t, "User2", getFirstName(user2Forms[0]))
@@ -386,7 +408,11 @@ func TestGetFormById_WrongUser(t *testing.T) {
 
 	// Create user 2
 	var user2ID string
-	err = db.QueryRow(`INSERT INTO users (email) VALUES ('user2@example.com') RETURNING id`).Scan(&user2ID)
+	err = db.QueryRow(`
+		INSERT INTO users (first_name, last_name, username, password_hash)
+		VALUES ('Test', 'User', 'TestUserName3', 'TestPass')
+		RETURNING id
+	`).Scan(&user2ID)
 	require.NoError(t, err)
 
 	// User 2 tries to access User 1's form
@@ -489,7 +515,11 @@ func TestUpdateFormById_WrongUser(t *testing.T) {
 
 	// Create user 2
 	var user2ID string
-	err = db.QueryRow(`INSERT INTO users (email) VALUES ('user2@example.com') RETURNING id`).Scan(&user2ID)
+	err = db.QueryRow(`
+		INSERT INTO users (first_name, last_name, username, password_hash)
+		VALUES ('Test', 'User', 'TestUserName4', 'TestPass')
+		RETURNING id
+	`).Scan(&user2ID)
 	require.NoError(t, err)
 
 	// User 2 tries to update User 1's form
@@ -623,7 +653,11 @@ func TestDeleteFormById_WrongUser(t *testing.T) {
 
 	// Create user 2
 	var user2ID string
-	err = db.QueryRow(`INSERT INTO users (email) VALUES ('user2@example.com') RETURNING id`).Scan(&user2ID)
+	err = db.QueryRow(`
+		INSERT INTO users (first_name, last_name, username, password_hash)
+		VALUES ('Test', 'User', 'TestUserName5', 'TestPass')
+		RETURNING id
+	`).Scan(&user2ID)
 	require.NoError(t, err)
 
 	// User 2 tries to delete User 1's form

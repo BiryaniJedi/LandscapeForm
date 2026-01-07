@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/forms"
 	"github.com/go-chi/chi/v5"
@@ -105,24 +106,14 @@ func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Reques
 	respondJSON(w, http.StatusCreated, resp)
 }
 
-// ListForms handles GET /api/forms?sort_by=created_at&order=DESC
+// ListForms handles GET /api/forms?sort_by=created_at&order=DESC&limit=10&offset=0&type=shrub&search=john
 func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
 	// Parse query parameters
-	sortBy := r.URL.Query().Get("sort_by")
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
+	opts := parseListFormsOptions(r)
 
-	order := r.URL.Query().Get("order")
-	if order == "" {
-		order = "DESC"
-	}
-
-	// TODO: Add pagination support (limit, offset)
-
-	views, err := h.repo.ListFormsByUserId(r.Context(), userID, sortBy, order)
+	views, err := h.repo.ListFormsByUserId(r.Context(), userID, opts)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch forms")
 		return
@@ -138,6 +129,71 @@ func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 		Forms: formResponses,
 		Count: len(formResponses),
 	})
+}
+
+// ListAllForms handles GET /api/admin/forms - returns ALL forms from all users (admin only)
+func (h *FormsHandler) ListAllForms(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	opts := parseListFormsOptions(r)
+
+	views, err := h.repo.ListAllForms(r.Context(), opts)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to fetch forms")
+		return
+	}
+
+	// Convert to response format
+	formResponses := make([]FormResponse, 0, len(views))
+	for _, view := range views {
+		formResponses = append(formResponses, formViewToResponse(view))
+	}
+
+	respondJSON(w, http.StatusOK, ListFormsResponse{
+		Forms: formResponses,
+		Count: len(formResponses),
+	})
+}
+
+// parseListFormsOptions parses query parameters for list forms endpoints
+func parseListFormsOptions(r *http.Request) forms.ListFormsOptions {
+	opts := forms.ListFormsOptions{}
+
+	// Pagination
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
+			opts.Limit = limit
+		}
+	}
+
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
+			opts.Offset = offset
+		}
+	}
+
+	// Pagination by page number (alternative to offset)
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if page, err := strconv.Atoi(pageStr); err == nil && page > 0 && opts.Limit > 0 {
+			opts.Offset = (page - 1) * opts.Limit
+		}
+	}
+
+	// Filtering
+	opts.FormType = r.URL.Query().Get("type")     // "shrub" or "pesticide"
+	opts.SearchName = r.URL.Query().Get("search") // search in first_name or last_name
+
+	// Sorting
+	opts.SortBy = r.URL.Query().Get("sort_by")
+	if opts.SortBy == "" {
+		opts.SortBy = "created_at"
+	}
+
+	opts.Order = r.URL.Query().Get("order")
+	if opts.Order == "" {
+		opts.Order = "DESC"
+	}
+
+	return opts
 }
 
 // GetForm handles GET /api/forms/{id}

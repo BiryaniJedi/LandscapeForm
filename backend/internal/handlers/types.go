@@ -2,7 +2,7 @@ package handlers
 
 import "time"
 
-// Request types for creating and updating forms
+// Forms
 
 type CreateShrubFormRequest struct {
 	FirstName string `json:"first_name"`
@@ -32,7 +32,7 @@ type UpdatePesticideFormRequest struct {
 	PesticideName string `json:"pesticide_name"`
 }
 
-// Response types
+// Forms response types
 
 type FormResponse struct {
 	ID        string    `json:"id"`
@@ -54,6 +54,39 @@ type ListFormsResponse struct {
 	Count int            `json:"count"`
 }
 
+// Users
+type CreateOrUpdateUserRequest struct {
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	DoB       time.Time `json:"date_of_birth"`
+	Username  string    `json:"user_name"`
+	Password  string    `json:"password"`
+}
+
+type ShortUserResponse struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdateAt  time.Time `json:"updated_at"`
+}
+
+type FullUserResponse struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Pending   bool      `json:"pending"`
+	Role      string    `json:"role"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	DoB       time.Time `json:"date_of_birth"`
+	Username  string    `json:"user_name"`
+}
+
+type ListUsersResponse struct {
+	Users []FullUserResponse `json:"users"`
+	Count int                `json:"count"`
+}
+
+// Generic Responses
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message,omitempty"`

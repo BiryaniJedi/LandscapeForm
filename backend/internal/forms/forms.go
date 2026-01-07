@@ -177,14 +177,28 @@ func (r *FormsRepository) CreatePesticideForm(
 	return res, nil
 }
 
-// ListFormsByUserId returns all forms owned by the given user.
+// ListFormsOptions contains optional filtering and pagination parameters
+type ListFormsOptions struct {
+	// Pagination
+	Limit  int // Max number of results (0 = no limit)
+	Offset int // Number of results to skip
+
+	// Filtering
+	FormType   string // Filter by form type: "shrub" or "pesticide" (empty = all)
+	SearchName string // Search in first_name or last_name (partial match)
+
+	// Sorting
+	SortBy string // "first_name", "last_name", or "created_at" (defaults to "created_at")
+	Order  string // "ASC" or "DESC" (defaults to "DESC")
+}
+
+// ListFormsByUserId returns all forms owned by the given user with pagination and filtering.
 // Results may be sorted by first name, last name, or creation time.
 // Each returned FormView is fully hydrated with its subtype details.
 func (r *FormsRepository) ListFormsByUserId(
 	ctx context.Context,
 	userID string,
-	sortBy string,
-	order string,
+	opts ListFormsOptions,
 ) ([]*FormView, error) {
 
 	allowedSorts := map[string]string{
@@ -193,16 +207,38 @@ func (r *FormsRepository) ListFormsByUserId(
 		"created_at": "f.created_at",
 	}
 
-	sortColumn, ok := allowedSorts[sortBy]
+	sortColumn, ok := allowedSorts[opts.SortBy]
 	if !ok {
 		sortColumn = "f.created_at"
 	}
 
-	order = strings.ToUpper(order)
+	order := strings.ToUpper(opts.Order)
 	if order != "ASC" && order != "DESC" {
 		order = "DESC"
 	}
 
+	// Build WHERE clause
+	whereConditions := []string{"f.created_by = $1"}
+	args := []interface{}{userID}
+	argIndex := 2
+
+	// Add form type filter
+	if opts.FormType != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("f.form_type = $%d", argIndex))
+		args = append(args, opts.FormType)
+		argIndex++
+	}
+
+	// Add name search filter
+	if opts.SearchName != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("(f.first_name ILIKE $%d OR f.last_name ILIKE $%d)", argIndex, argIndex))
+		args = append(args, "%"+opts.SearchName+"%")
+		argIndex++
+	}
+
+	whereClause := strings.Join(whereConditions, " AND ")
+
+	// Build query with pagination
 	query := fmt.Sprintf(`
 		SELECT
 			f.id,
@@ -218,11 +254,169 @@ func (r *FormsRepository) ListFormsByUserId(
 		FROM forms f
 		LEFT JOIN shrubs s ON f.id = s.form_id
 		LEFT JOIN pesticides p ON f.id = p.form_id
-		WHERE f.created_by = $1
+		WHERE %s
 		ORDER BY %s %s
-	`, sortColumn, order)
+	`, whereClause, sortColumn, order)
 
-	rows, err := r.db.QueryContext(ctx, query, userID)
+	// Add pagination
+	if opts.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, opts.Limit)
+		argIndex++
+	}
+	if opts.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, opts.Offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var forms []*FormView
+	for rows.Next() {
+		var (
+			form      Form
+			shrub     shrubRow
+			pesticide pesticideRow
+		)
+
+		err := rows.Scan(
+			&form.ID,
+			&form.CreatedBy,
+			&form.CreatedAt,
+			&form.FormType,
+			&form.UpdatedAt,
+			&form.FirstName,
+			&form.LastName,
+			&form.HomePhone,
+			&shrub.NumShrubs,
+			&pesticide.PesticideName,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		var view *FormView
+		switch form.FormType {
+		case "shrub":
+			shrubDetails, err := shrub.ToDomain()
+			if err != nil {
+				return nil, err
+			}
+			view = NewShrubFormView(
+				ShrubForm{
+					Form:         form,
+					ShrubDetails: shrubDetails,
+				},
+			)
+
+		case "pesticide":
+			pesticideDetails, err := pesticide.ToDomain()
+			if err != nil {
+				return nil, err
+			}
+			view = NewPesticideFormView(
+				PesticideForm{
+					Form:             form,
+					PesticideDetails: pesticideDetails,
+				},
+			)
+		default:
+			return nil, fmt.Errorf("unknown form_type: %s", form.FormType)
+		}
+		forms = append(forms, view)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return forms, nil
+}
+
+// ListAllForms returns all forms (admin only) with pagination and filtering.
+// Does NOT filter by user - returns forms from all users.
+// Each returned FormView is fully hydrated with its subtype details.
+func (r *FormsRepository) ListAllForms(
+	ctx context.Context,
+	opts ListFormsOptions,
+) ([]*FormView, error) {
+
+	allowedSorts := map[string]string{
+		"first_name": "f.first_name",
+		"last_name":  "f.last_name",
+		"created_at": "f.created_at",
+	}
+
+	sortColumn, ok := allowedSorts[opts.SortBy]
+	if !ok {
+		sortColumn = "f.created_at"
+	}
+
+	order := strings.ToUpper(opts.Order)
+	if order != "ASC" && order != "DESC" {
+		order = "DESC"
+	}
+
+	// Build WHERE clause
+	whereConditions := []string{}
+	args := []interface{}{}
+	argIndex := 1
+
+	// Add form type filter
+	if opts.FormType != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("f.form_type = $%d", argIndex))
+		args = append(args, opts.FormType)
+		argIndex++
+	}
+
+	// Add name search filter
+	if opts.SearchName != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("(f.first_name ILIKE $%d OR f.last_name ILIKE $%d)", argIndex, argIndex))
+		args = append(args, "%"+opts.SearchName+"%")
+		argIndex++
+	}
+
+	whereClause := ""
+	if len(whereConditions) > 0 {
+		whereClause = "WHERE " + strings.Join(whereConditions, " AND ")
+	}
+
+	// Build query with pagination
+	query := fmt.Sprintf(`
+		SELECT
+			f.id,
+			f.created_by,
+			f.created_at,
+			f.form_type,
+			f.updated_at,
+			f.first_name,
+			f.last_name,
+			f.home_phone,
+			s.num_shrubs,
+			p.pesticide_name
+		FROM forms f
+		LEFT JOIN shrubs s ON f.id = s.form_id
+		LEFT JOIN pesticides p ON f.id = p.form_id
+		%s
+		ORDER BY %s %s
+	`, whereClause, sortColumn, order)
+
+	// Add pagination
+	if opts.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, opts.Limit)
+		argIndex++
+	}
+	if opts.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, opts.Offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -525,6 +719,6 @@ func (r *FormsRepository) DeleteFormById(
 		// sql.ErrNoRows → not found or not owned
 		return err
 	}
-	
+
 	return nil
 }

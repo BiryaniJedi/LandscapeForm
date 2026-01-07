@@ -171,6 +171,145 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/api/form
 check_status 200 "$HTTP_CODE" "Delete shrub form (cleanup)"
 echo ""
 
+echo "================================"
+echo "USER ENDPOINT TESTS"
+echo "================================"
+echo ""
+
+# Test 14: Create User (Registration)
+echo "14. Creating User (Registration)..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"Alice","last_name":"Johnson","date_of_birth":"1990-05-15T00:00:00Z","user_name":"alice.johnson","password":"password123"}')
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+USER_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+USER_ID=$(echo "$USER_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+if check_status 201 "$HTTP_CODE" "Create user (registration)"; then
+    echo "   Created user ID: $USER_ID"
+fi
+echo ""
+
+# Test 15: Create Second User
+echo "15. Creating Second User..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"Bob","last_name":"Smith","date_of_birth":"1985-08-20T00:00:00Z","user_name":"bob.smith","password":"password456"}')
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+USER2_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+USER2_ID=$(echo "$USER2_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+if check_status 201 "$HTTP_CODE" "Create second user"; then
+    echo "   Created user ID: $USER2_ID"
+fi
+echo ""
+
+# Test 16: Get User by ID
+echo "16. Getting User by ID..."
+RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/users/$USER_ID")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+GET_USER_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+USERNAME=$(echo "$GET_USER_RESPONSE" | grep -o '"user_name":"[^"]*"' | cut -d'"' -f4)
+PENDING=$(echo "$GET_USER_RESPONSE" | grep -o '"pending":[^,}]*' | cut -d':' -f2)
+
+if check_status 200 "$HTTP_CODE" "Get user by ID"; then
+    echo "   Username: $USERNAME"
+    echo "   Pending: $PENDING"
+fi
+echo ""
+
+# Test 17: List All Users (Admin endpoint - no auth yet)
+echo "17. Listing All Users..."
+RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/users")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+LIST_USERS_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+USER_COUNT=$(echo "$LIST_USERS_RESPONSE" | grep -o '"count":[0-9]*' | cut -d':' -f2)
+
+if check_status 200 "$HTTP_CODE" "List all users"; then
+    echo "   Found $USER_COUNT users"
+fi
+echo ""
+
+# Test 18: List Users Sorted by First Name (ASC)
+echo "18. Listing Users Sorted by First Name (ASC)..."
+RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/users?sort_by=first_name&order=ASC")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+check_status 200 "$HTTP_CODE" "List users with sorting"
+echo ""
+
+# Test 19: Update User
+echo "19. Updating User..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$BASE_URL/api/users/$USER_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"Alice","last_name":"Johnson-Williams","date_of_birth":"1990-05-15T00:00:00Z","user_name":"alice.williams","password":""}')
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+UPDATED_USER_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+
+if check_status 200 "$HTTP_CODE" "Update user"; then
+    echo "   User updated successfully"
+fi
+echo ""
+
+# Test 20: Get Updated User
+echo "20. Getting Updated User..."
+RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/users/$USER_ID")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+GET_UPDATED_USER=$(echo "$RESPONSE" | sed '$d')
+UPDATED_LASTNAME=$(echo "$GET_UPDATED_USER" | grep -o '"last_name":"[^"]*"' | cut -d'"' -f4)
+UPDATED_USERNAME=$(echo "$GET_UPDATED_USER" | grep -o '"user_name":"[^"]*"' | cut -d'"' -f4)
+
+if check_status 200 "$HTTP_CODE" "Get updated user"; then
+    echo "   Updated last name: $UPDATED_LASTNAME"
+    echo "   Updated username: $UPDATED_USERNAME"
+fi
+echo ""
+
+# Test 21: Approve User (Admin endpoint)
+echo "21. Approving User Registration (Admin)..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/users/$USER_ID/approve")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+APPROVED_USER=$(echo "$RESPONSE" | sed '$d')
+
+if check_status 200 "$HTTP_CODE" "Approve user registration"; then
+    echo "   User approved successfully"
+fi
+echo ""
+
+# Test 22: Verify User is Approved
+echo "22. Verifying User is Approved..."
+RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/users/$USER_ID")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+VERIFIED_USER=$(echo "$RESPONSE" | sed '$d')
+PENDING_STATUS=$(echo "$VERIFIED_USER" | grep -o '"pending":[^,}]*' | cut -d':' -f2)
+
+if check_status 200 "$HTTP_CODE" "Verify user approval"; then
+    echo "   Pending status: $PENDING_STATUS (should be false)"
+fi
+echo ""
+
+# Test 23: Delete User (Admin endpoint)
+echo "23. Deleting Second User (Admin)..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE "$BASE_URL/api/users/$USER2_ID")
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+DELETE_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+
+if check_status 200 "$HTTP_CODE" "Delete user"; then
+    echo "   User deleted successfully"
+fi
+echo ""
+
+# Test 24: Verify Deleted User Returns 404
+echo "24. Trying to Get Deleted User (Should Return 404)..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/users/$USER2_ID")
+check_status 404 "$HTTP_CODE" "Get deleted user (expect 404)"
+echo ""
+
+# Test 25: Delete First User (Cleanup)
+echo "25. Deleting First User (Cleanup)..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/api/users/$USER_ID")
+check_status 200 "$HTTP_CODE" "Delete first user (cleanup)"
+echo ""
+
 # Final summary
 echo "================================"
 echo "Test Results Summary"

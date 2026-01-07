@@ -2,54 +2,130 @@ package middleware
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/auth"
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/users"
 )
 
-// AuthMiddleware is a placeholder for JWT authentication
-// TODO: Implement actual JWT validation
-func AuthMiddleware(next http.Handler) http.Handler {
+// AuthMiddleware validates JWT tokens and loads current user data from database
+// This ensures we always have the latest user role and pending status
+func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Extract token from Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				w.Header().Set("Content-Type", "application/json")
+				http.Error(w, `{"error":"Unauthorized","message":"Missing authorization header"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Expected format: "Bearer <token>"
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				w.Header().Set("Content-Type", "application/json")
+				http.Error(w, `{"error":"Unauthorized","message":"Invalid authorization header format"}`, http.StatusUnauthorized)
+				return
+			}
+
+			token := parts[1]
+
+			// Validate JWT token to get user ID
+			claims, err := auth.ValidateToken(token)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				http.Error(w, `{"error":"Unauthorized","message":"Invalid or expired token"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// IMPORTANT: Query database to get current user role and status
+			// Never trust the role from JWT - user role could have changed
+			user, err := usersRepo.GetUserById(r.Context(), claims.UserID)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					w.Header().Set("Content-Type", "application/json")
+					http.Error(w, `{"error":"Unauthorized","message":"User not found"}`, http.StatusUnauthorized)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				http.Error(w, `{"error":"Internal Server Error","message":"Failed to verify user"}`, http.StatusInternalServerError)
+				return
+			}
+
+			// Add user info to request context
+			ctx := context.WithValue(r.Context(), "userID", user.ID)
+			ctx = context.WithValue(ctx, "userRole", user.Role)
+			ctx = context.WithValue(ctx, "userPending", user.Pending)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// RequireApproved middleware ensures only non-pending users can access endpoints
+// Must be used AFTER AuthMiddleware
+func RequireApproved(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract token from Authorization header
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Missing authorization header", http.StatusUnauthorized)
+		// Extract pending status from context (set by AuthMiddleware)
+		userPending, ok := r.Context().Value("userPending").(bool)
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Forbidden","message":"User status not found"}`, http.StatusForbidden)
 			return
 		}
 
-		// Expected format: "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+		// Check if user is pending approval
+		if userPending {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Forbidden","message":"Account pending admin approval"}`, http.StatusForbidden)
 			return
 		}
 
-		token := parts[1]
-
-		// TODO: Validate JWT token here
-		// - Parse the token
-		// - Verify signature
-		// - Check expiration
-		// - Extract user ID from claims
-
-		// PLACEHOLDER: For now, just check token is not empty
-		if token == "" {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		// TODO: Replace this with actual user ID from JWT claims
-		// For development, you can hardcode a test user ID
-		userID := "placeholder-user-id"
-
-		// Add userID to request context
-		ctx := context.WithValue(r.Context(), "userID", userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }
 
-// Optional: Helper to extract userID from context
+// AdminOnly middleware ensures only admin users can access the endpoint
+// Must be used AFTER AuthMiddleware
+func AdminOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract user role from context (set by AuthMiddleware)
+		userRole, ok := r.Context().Value("userRole").(string)
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Forbidden","message":"User role not found"}`, http.StatusForbidden)
+			return
+		}
+
+		// Check if user is admin
+		if userRole != "admin" {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Forbidden","message":"Admin access required"}`, http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// GetUserID extracts userID from context
 func GetUserID(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value("userID").(string)
 	return userID, ok
+}
+
+// GetUserRole extracts user role from context
+func GetUserRole(ctx context.Context) (string, bool) {
+	userRole, ok := ctx.Value("userRole").(string)
+	return userRole, ok
+}
+
+// GetUserPending extracts user pending status from context
+func GetUserPending(ctx context.Context) (bool, bool) {
+	userPending, ok := ctx.Value("userPending").(bool)
+	return userPending, ok
 }
