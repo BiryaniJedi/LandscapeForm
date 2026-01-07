@@ -140,11 +140,7 @@ export default function DashboardPage() {
                                     </p>
                                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">
                                         0
-                                    </p><pre className="text-xs">
-                                        User stringiy: {JSON.stringify(user, null, 2)}
-                                    </pre>
-                                    <p>Error: {error == null ? "No Error" : error}</p>
-                                    <p>User: {user == null ? "No user" : `User name: ${user.username}`}</p>
+                                    </p>
                                 </div>
                             </div>
                         </div>

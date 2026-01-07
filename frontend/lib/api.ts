@@ -67,7 +67,7 @@ class ApiClient {
             const response = await fetch(url, {
                 ...options,
                 headers,
-                credentials: 'include', // CRITICAL: Include cookies for authentication
+                credentials: 'include',
             });
 
             // Handle 401 Unauthorized - redirect to login
