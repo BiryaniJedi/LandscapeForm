@@ -176,33 +176,47 @@ echo "USER ENDPOINT TESTS"
 echo "================================"
 echo ""
 
-# Test 14: Create User (Registration)
-echo "14. Creating User (Registration)..."
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/users" \
+# Test 14: Create User (Auth)
+echo "14. Creating User (Auth)..."
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"first_name":"Alice","last_name":"Johnson","date_of_birth":"1990-05-15T00:00:00Z","user_name":"alice.johnson","password":"password123"}')
+  -d '{"first_name":"Alice","last_name":"Johnson","date_of_birth":"1990-05-15T00:00:00Z","username":"alice.johnson","password":"password123"}')
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 USER_RESPONSE=$(echo "$RESPONSE" | sed '$d')
 USER_ID=$(echo "$USER_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+echo "$HTTP_CODE"
 
-if check_status 201 "$HTTP_CODE" "Create user (registration)"; then
+if check_status 200 "$HTTP_CODE" "Create user (registration)"; then
     echo "   Created user ID: $USER_ID"
 fi
 echo ""
 
 # Test 15: Create Second User
 echo "15. Creating Second User..."
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/users" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"first_name":"Bob","last_name":"Smith","date_of_birth":"1985-08-20T00:00:00Z","user_name":"bob.smith","password":"password456"}')
+  -d '{"first_name":"Bob","last_name":"Smith","date_of_birth":"1985-08-20T00:00:00Z","username":"bob.smith","password":"password456"}')
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 USER2_RESPONSE=$(echo "$RESPONSE" | sed '$d')
 USER2_ID=$(echo "$USER2_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
 
-if check_status 201 "$HTTP_CODE" "Create second user"; then
+if check_status 200 "$HTTP_CODE" "Create second user"; then
     echo "   Created user ID: $USER2_ID"
 fi
 echo ""
+
+# echo "16. Logging in to first User..."
+# RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+#   -H "Content-Type: application/json" \
+#   -d '{"user_name":"alice.johnson","password":"password123"}')
+# HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+# USER2_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+# USER2_ID=$(echo "$USER2_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+# if check_status 201 "$HTTP_CODE" "Create second user"; then
+#     echo "   Created user ID: $USER2_ID"
+# fi
+# echo ""
 
 # Test 16: Get User by ID
 echo "16. Getting User by ID..."

@@ -20,6 +20,7 @@ func NewUsersHandler(repo *users.UsersRepository) *UsersHandler {
 	return &UsersHandler{repo: repo}
 }
 
+/*
 // CreateUser handles POST /api/users
 // This is a public endpoint for user registration
 func (h *UsersHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +53,7 @@ func (h *UsersHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusCreated, shortUserResponse)
 }
+*/
 
 // GetUser handles GET /api/users/{id}
 // MIDDLEWARE REQUIRED: Authentication - Users can only view their own profile

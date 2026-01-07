@@ -10,165 +10,215 @@
 - Test infrastructure and helpers
 - Transaction-safe operations
 - Efficient indexing for queries
+- **HTTP API handlers - ALL endpoints implemented**
+- **Authentication/authorization system - COMPLETE**
+- **JWT token generation and validation**
+- **All middleware (Auth, AdminOnly, RequireApproved, CORS, Logger, Recovery)**
+- **Search/filter/pagination endpoints**
+- **Admin functionality (ListAllForms, user management)**
+- **Comprehensive API test script**
 
 **❌ Not Implemented:**
-- HTTP API handlers (only `/health` exists)
-- Authentication/authorization system
+- Input validation in handlers (TODOs in code)
+- Better error handling (duplicate username, etc.)
+- Backend handler/middleware/integration tests
 - Frontend UI (just Next.js boilerplate)
-- Search/filter endpoints
-- Admin functionality
 - PDF upload/export features
+
+---
+
+## 🎯 What's Next?
+
+### Immediate Backend Tasks (Optional Polish):
+1. **Add Input Validation** - All handlers have TODO comments for:
+   - Required field validation
+   - Phone number format validation
+   - Password strength requirements
+   - Date of birth validation
+   - Duplicate username error handling
+
+2. **Add Backend Tests**:
+   - Handler tests using httptest
+   - Middleware tests
+   - Integration tests
+
+3. **Error Handling Enhancements**:
+   - Better error messages for duplicate usernames
+   - More specific error responses
+
+### Main Development Path (Frontend):
+**The backend is fully functional!** The next major phase is to build the frontend:
+- Phase 5: Frontend Authentication (login/register pages)
+- Phase 6: Frontend Form Management (dashboard, CRUD UI)
+- Phase 7: Admin Dashboard
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Backend API Layer
+### Phase 1: Backend API Layer ✅ **COMPLETE**
 **Goal:** Expose the repository layer as REST endpoints
 
-**What to Build:**
-- HTTP handlers connecting repository methods to routes
-- Request/response DTOs (data transfer objects)
-- Input validation for all endpoints
-- Proper error response formatting
-- Middleware for logging, CORS, and panic recovery
-- Wire up chi router (already in dependencies)
+**What Was Built:**
+- ✅ HTTP handlers connecting repository methods to routes
+- ✅ Request/response DTOs (data transfer objects)
+- ⚠️ Input validation for all endpoints (TODOs in code - still needed)
+- ✅ Proper error response formatting
+- ✅ Middleware for logging, CORS, and panic recovery
+- ✅ Chi router wired up
 
-**Key Files to Create:**
-- `backend/internal/handlers/handlers.go` - Handler struct with dependencies
-- `backend/internal/handlers/forms.go` - Form CRUD endpoints
-- `backend/internal/middleware/` - Logging, CORS, recovery middleware
-- Update `backend/cmd/api/main.go` - Wire routes to handlers
+**Key Files Created:**
+- ✅ `backend/internal/handlers/types.go` - Request/response types
+- ✅ `backend/internal/handlers/responses.go` - Response helpers
+- ✅ `backend/internal/handlers/forms.go` - Form CRUD endpoints
+- ✅ `backend/internal/middleware/logger.go` - Request logging
+- ✅ `backend/internal/middleware/cors.go` - CORS headers
+- ✅ `backend/internal/middleware/recovery.go` - Panic recovery
+- ✅ `backend/cmd/api/main.go` - Full router setup
 
-**Endpoints to Implement:**
+**Endpoints Implemented:**
 ```
-POST   /api/forms/shrub          Create shrub form
-POST   /api/forms/pesticide      Create pesticide form
-GET    /api/forms                List user's forms (with sort params)
-GET    /api/forms/{id}           Get single form
-PUT    /api/forms/{id}           Update form
-DELETE /api/forms/{id}           Delete form
+✅ POST   /api/forms/shrub          Create shrub form
+✅ POST   /api/forms/pesticide      Create pesticide form
+✅ GET    /api/forms                List user's forms (with sort/filter params)
+✅ GET    /api/forms/{id}           Get single form
+✅ PUT    /api/forms/{id}           Update form
+✅ DELETE /api/forms/{id}           Delete form
 ```
 
-**Key Considerations:**
-- Extract user ID from context (set by auth middleware later)
-- Return proper HTTP status codes (200, 201, 400, 404, 500)
-- Validate all inputs before calling repository
-- Handle `sql.ErrNoRows` → 404 responses
-- Use JSON for all requests/responses
+**Implementation Notes:**
+- ✅ Extracts user ID from context (set by auth middleware)
+- ✅ Returns proper HTTP status codes (200, 201, 400, 404, 500)
+- ⚠️ Input validation TODOs remain in code
+- ✅ Handles `sql.ErrNoRows` → 404 responses
+- ✅ Uses JSON for all requests/responses
 
 ---
 
-### Phase 2: Authentication & Authorization
+### Phase 2: Authentication & Authorization ✅ **COMPLETE**
 **Goal:** Secure the API and identify users
 
-**What to Build:**
-- User registration endpoint (email + password)
-- User login endpoint (returns JWT token)
-- Password hashing with bcrypt
-- JWT token generation and validation
-- Auth middleware to extract current user from token
-- Protected route wrapper
+**What Was Built:**
+- ✅ User registration endpoint (username + password)
+- ✅ User login endpoint (returns JWT token + user data)
+- ✅ Password hashing with bcrypt
+- ✅ JWT token generation and validation
+- ✅ Auth middleware to extract current user from token AND load from DB
+- ✅ Protected route wrapper (RequireApproved middleware)
+- ✅ Admin-only route wrapper (AdminOnly middleware)
+- ✅ User approval system (pending flag)
 
-**Key Files to Create:**
-- `backend/internal/auth/auth.go` - Password hashing, JWT helpers
-- `backend/internal/auth/middleware.go` - JWT validation middleware
-- `backend/internal/users/repository.go` - User CRUD operations
-- `backend/internal/handlers/auth.go` - Registration/login handlers
+**Key Files Created:**
+- ✅ `backend/internal/auth/jwt.go` - JWT generation and validation
+- ✅ `backend/internal/middleware/auth.go` - Auth middleware (JWT validation + DB user lookup)
+- ✅ `backend/internal/users/users.go` - User CRUD operations repository
+- ✅ `backend/internal/users/models.go` - User domain models
+- ✅ `backend/internal/handlers/auth.go` - Registration/login handlers
+- ✅ `backend/internal/handlers/users.go` - User management handlers
 
-**Database Changes:**
-- Add `password_hash` column to users table
-- Add `is_admin` boolean column to users table
+**Database Schema:**
+- ✅ `password_hash` column in users table
+- ✅ `role` column with 'employee' or 'admin' values (not just boolean)
+- ✅ `pending` boolean for approval workflow
 
-**Endpoints to Implement:**
+**Endpoints Implemented:**
 ```
-POST   /api/auth/register        Create new user account
-POST   /api/auth/login           Login, return JWT token
-GET    /api/auth/me              Get current user info (protected)
+✅ POST   /api/auth/register        Create new user account (returns token + user)
+✅ POST   /api/auth/login           Login, return JWT token + user data
+✅ GET    /api/users/{id}           Get user by ID (protected)
+✅ PUT    /api/users/{id}           Update user (protected)
+✅ GET    /api/users                List all users (admin only)
+✅ DELETE /api/users/{id}           Delete user (admin only)
+✅ POST   /api/users/{id}/approve   Approve pending user (admin only)
 ```
 
-**Key Considerations:**
-- Use bcrypt for password hashing (cost factor 12-14)
-- JWT secret from environment variable
-- Token expiration (24 hours recommended)
-- Store user ID and is_admin flag in JWT claims
-- Middleware extracts token from Authorization header
-- All `/api/forms/*` routes should require authentication
+**Implementation Details:**
+- ✅ Uses bcrypt for password hashing (default cost)
+- ✅ JWT secret from environment variable (with fallback for dev)
+- ✅ Token expiration (24 hours)
+- ✅ Stores user ID and role in JWT claims
+- ✅ Middleware extracts token from Authorization header
+- ✅ All `/api/forms/*` routes require authentication + approved account
+- ✅ Auth middleware loads current user from DB (doesn't trust JWT role)
 
-**Dependencies to Add:**
-```bash
-go get golang.org/x/crypto/bcrypt
-go get github.com/golang-jwt/jwt/v5
-```
+**Dependencies Added:**
+- ✅ golang.org/x/crypto/bcrypt
+- ✅ github.com/golang-jwt/jwt/v5
 
 ---
 
-### Phase 3: Search, Filter & Pagination
+### Phase 3: Search, Filter & Pagination ✅ **COMPLETE**
 **Goal:** Enhance form listing with query capabilities
 
-**What to Build:**
-- Query parameter parsing for search/filter/sort
-- Enhanced repository method accepting filter params
-- Pagination support (page number + page size)
-- Total count for pagination metadata
+**What Was Built:**
+- ✅ Query parameter parsing for search/filter/sort
+- ✅ Enhanced repository method accepting filter params
+- ✅ Pagination support (limit + offset OR page number)
+- ⚠️ Total count for pagination metadata (not implemented - could be added)
 
-**Repository Changes:**
-- Update `ListFormsByUserId` to accept filter parameters:
-  - `search` - Search in first_name/last_name (case-insensitive)
-  - `form_type` - Filter by shrub/pesticide
-  - `sort_by` - Column to sort (first_name, last_name, created_at)
-  - `order` - ASC or DESC
-  - `page` - Page number (1-indexed)
-  - `page_size` - Results per page (default 20)
+**Repository Implementation:**
+- ✅ `ListFormsByUserId` accepts filter parameters:
+  - ✅ `search` - Search in first_name/last_name (case-insensitive with ILIKE)
+  - ✅ `form_type` - Filter by shrub/pesticide
+  - ✅ `sort_by` - Column to sort (first_name, last_name, created_at)
+  - ✅ `order` - ASC or DESC
+  - ✅ `limit` - Number of results to return
+  - ✅ `offset` - Number of results to skip
+  - ✅ `page` - Page number (converted to offset internally)
 
-**API Changes:**
-- `GET /api/forms` accepts query params:
+**API Implementation:**
+- ✅ `GET /api/forms` accepts query params:
   ```
-  /api/forms?search=smith&form_type=shrub&sort_by=last_name&order=DESC&page=1&page_size=20
+  /api/forms?search=smith&type=shrub&sort_by=last_name&order=DESC&limit=20&offset=0
+  /api/forms?search=smith&type=shrub&sort_by=last_name&order=DESC&page=1&limit=20
   ```
-- Return pagination metadata in response:
+- Current response format:
   ```json
   {
     "forms": [...],
-    "total": 150,
-    "page": 1,
-    "page_size": 20,
-    "total_pages": 8
+    "count": 15
   }
   ```
+- ⚠️ Note: Does not return total count or total_pages (could be enhanced)
 
-**Key Considerations:**
-- Use database indexes already created for efficient queries
-- Validate sort_by column is allowed (prevent SQL injection)
-- Default values for missing params
-- Handle empty results gracefully
+**Implementation Details:**
+- ✅ Uses database indexes for efficient queries
+- ✅ Validates sort_by column against allowed list (prevents SQL injection)
+- ✅ Default values for missing params
+- ✅ Handles empty results gracefully
 
 ---
 
-### Phase 4: Admin Functionality
+### Phase 4: Admin Functionality ✅ **COMPLETE**
 **Goal:** Allow admins to view all forms across all users
 
-**What to Build:**
-- New repository method to list all forms (no user filter)
-- Admin-only endpoint
-- Middleware to check admin role
-- Include user/creator info in admin responses
+**What Was Built:**
+- ✅ New repository method to list all forms (no user filter)
+- ✅ Admin-only endpoint
+- ✅ Middleware to check admin role
+- ✅ Admin user management endpoints
+- ✅ User approval workflow
 
-**Key Files to Modify:**
-- `backend/internal/forms/forms.go` - Add `ListAllForms()` method
-- `backend/internal/handlers/forms.go` - Add admin handler
-- `backend/internal/middleware/admin.go` - Admin check middleware
+**Key Files Modified:**
+- ✅ `backend/internal/forms/forms.go` - Added `ListAllForms()` method
+- ✅ `backend/internal/handlers/forms.go` - Added admin handler
+- ✅ `backend/internal/middleware/auth.go` - Added `AdminOnly` middleware
+- ✅ `backend/internal/handlers/users.go` - User management handlers (all admin-only)
 
-**Endpoints to Implement:**
+**Endpoints Implemented:**
 ```
-GET    /api/admin/forms          List all forms (admin only)
+✅ GET    /api/admin/forms              List all forms (admin only)
+✅ GET    /api/users                    List all users (admin only)
+✅ DELETE /api/users/{id}               Delete user (admin only)
+✅ POST   /api/users/{id}/approve       Approve pending user (admin only)
 ```
 
-**Key Considerations:**
-- Check `is_admin` flag from JWT claims
-- Return 403 Forbidden if not admin
-- Include created_by user email in response for context
-- Support same search/filter/pagination as user endpoint
+**Implementation Details:**
+- ✅ Checks `role` from user loaded from DB (not from JWT - more secure)
+- ✅ Returns 403 Forbidden if not admin
+- ✅ Forms include created_by UUID in response
+- ✅ Supports same search/filter/pagination as user endpoint
+- ✅ User approval workflow (new users are pending until approved)
 
 ---
 
@@ -385,14 +435,14 @@ GET    /api/forms/{id}/pdf       Download form as PDF
 
 ## Suggested Implementation Order
 
-1. **Phase 1** (Backend API) - Get basic endpoints working
-2. **Phase 2** (Auth) - Secure the API
-3. **Phase 5** (Frontend Auth) - Login/register UI
-4. **Phase 6** (Frontend Forms) - Main functionality
-5. **Phase 3** (Search/Filter) - Enhanced querying
-6. **Phase 4** (Admin) - Admin features
+1. ✅ **Phase 1** (Backend API) - Get basic endpoints working - **DONE**
+2. ✅ **Phase 2** (Auth) - Secure the API - **DONE**
+3. ✅ **Phase 3** (Search/Filter) - Enhanced querying - **DONE**
+4. ✅ **Phase 4** (Admin) - Admin features - **DONE**
+5. **→ Phase 5** (Frontend Auth) - Login/register UI - **NEXT STEP**
+6. **Phase 6** (Frontend Forms) - Main functionality
 7. **Phase 7** (Admin UI) - Admin dashboard
-8. **Testing** - Add test coverage
+8. **Testing** - Add test coverage (backend + frontend)
 9. **Phase 8** (PDF) - Optional advanced feature
 10. **Deployment** - Ship to production
 
@@ -400,16 +450,16 @@ GET    /api/forms/{id}/pdf       Download form as PDF
 
 ## Estimated Complexity
 
-| Phase | Complexity | Estimated Effort |
-|-------|------------|------------------|
-| 1. Backend API | Medium | Core functionality |
-| 2. Authentication | Medium-High | Critical for security |
-| 3. Search/Filter | Low | Leverages existing DB indexes |
-| 4. Admin API | Low | Extension of existing patterns |
-| 5. Frontend Auth | Medium | Standard auth flow |
-| 6. Frontend Forms | Medium-High | Main UI bulk |
-| 7. Admin UI | Low | Reuse dashboard components |
-| 8. PDF Features | High | Complex, optional |
+| Phase | Complexity | Status |
+|-------|------------|--------|
+| 1. Backend API | Medium | ✅ **COMPLETE** |
+| 2. Authentication | Medium-High | ✅ **COMPLETE** |
+| 3. Search/Filter | Low | ✅ **COMPLETE** |
+| 4. Admin API | Low | ✅ **COMPLETE** |
+| 5. Frontend Auth | Medium | ❌ **TODO** |
+| 6. Frontend Forms | Medium-High | ❌ **TODO** |
+| 7. Admin UI | Low | ❌ **TODO** |
+| 8. PDF Features | High | ❌ **TODO** (Optional) |
 
 ---
 

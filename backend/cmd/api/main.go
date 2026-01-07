@@ -38,20 +38,22 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 	r := chi.NewRouter()
 
 	// Global middleware
-	r.Use(middleware.Recovery)      // Recover from panics
-	r.Use(middleware.Logger)        // Log all requests
-	r.Use(middleware.CORS)          // Enable CORS
-	r.Use(chimiddleware.RequestID)  // Add request ID to each request
-	r.Use(chimiddleware.RealIP)     // Get real client IP
+	r.Use(middleware.Recovery)     // Recover from panics
+	r.Use(middleware.Logger)       // Log all requests
+	r.Use(middleware.CORS)         // Enable CORS
+	r.Use(chimiddleware.RequestID) // Add request ID to each request
+	r.Use(chimiddleware.RealIP)    // Get real client IP
 
 	// Public routes (no auth required)
 	r.Get("/health", healthHandler)
 
 	// Authentication routes (public)
-	r.Post("/api/auth/login", authHandler.Login)  // POST /api/auth/login
+	r.Post("/api/auth/login", authHandler.Login) // POST /api/auth/login
+	r.Post("/api/auth/register", authHandler.Register)
 
-	// User registration (public)
+	/*// User registration (public)
 	r.Post("/api/users", usersHandler.CreateUser) // POST /api/users
+	*/
 
 	// Protected routes (require authentication and approved account)
 	r.Route("/api", func(r chi.Router) {
@@ -84,9 +86,9 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminOnly) // Require admin role
 
-				r.Get("/", usersHandler.ListUsers)                    // GET /api/users
-				r.Delete("/{id}", usersHandler.DeleteUser)            // DELETE /api/users/{id}
-				r.Post("/{id}/approve", usersHandler.ApproveUser)     // POST /api/users/{id}/approve
+				r.Get("/", usersHandler.ListUsers)                // GET /api/users
+				r.Delete("/{id}", usersHandler.DeleteUser)        // DELETE /api/users/{id}
+				r.Post("/{id}/approve", usersHandler.ApproveUser) // POST /api/users/{id}/approve
 			})
 		})
 
@@ -103,7 +105,7 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 
 func main() {
 	// Load environment variables
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../../.env"); err != nil {
 		log.Println("No .env file found")
 	}
 

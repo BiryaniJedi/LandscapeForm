@@ -162,7 +162,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Username:  userFull.Username,
 	}
 
-	respondJSON(w, http.StatusOK, LoginOrRegisterResponse{
+	respondJSON(w, http.StatusCreated, LoginOrRegisterResponse{
 		Token: token,
 		User:  userResponse,
 	})
