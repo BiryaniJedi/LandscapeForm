@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api, User } from '../api/auth';
+import { api, User, AuthError } from '../api/auth';
 
 interface AuthContextType {
     user: User | null;
@@ -30,15 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load user from localStorage on mount
+    // fetch user from db on mount 
     useEffect(() => {
-        try {
-            refreshUser();
-        } catch (error) {
-            console.error('Failed to fetch user:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        const init = async () => {
+            try {
+                await refreshUser();
+            } catch (error) {
+                console.error('Failed to fetch user:', error);
+            }
+        };
+
+        init();
     }, []);
 
     const login = async (username: string, password: string) => {
@@ -46,8 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const response = await api.login({ username, password });
             setUser(response.user);
-            localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
+            if (error instanceof AuthError)
+                throw error as AuthError
             throw error;
         } finally {
             setIsLoading(false);
@@ -65,8 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const response = await api.register(userData);
             setUser(response.user);
-            localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
+            if (error instanceof AuthError)
+                throw error as AuthError
             throw error;
         } finally {
             setIsLoading(false);
@@ -77,10 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         try {
             const response = await api.me();
-            if (typeof (response))
-                setUser(response);
-            localStorage.setItem('user', JSON.stringify(response));
+            setUser(response);
         } catch (error) {
+            if (error instanceof AuthError)
+                throw error as AuthError
             throw error;
         } finally {
             setIsLoading(false);
@@ -90,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         await api.logout();
         setUser(null);
-        localStorage.removeItem('user');
     };
 
     const value: AuthContextType = {

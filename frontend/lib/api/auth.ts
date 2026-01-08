@@ -88,10 +88,10 @@ class ApiClient {
 
             return data as T;
         } catch (error) {
-            if (error instanceof AuthError) {
-                throw error;
+            if (!(error instanceof Error)) {
+                throw new Error('UNEXPECTED')
             }
-            throw new Error('An unexpected error occurred');
+            throw new AuthError(error.message);
         }
     }
 
@@ -99,7 +99,7 @@ class ApiClient {
      * Login user
      * Cookie is automatically stored by browser
      */
-    async login(credentials: LoginRequest): Promise<AuthResponse | Error> {
+    async login(credentials: LoginRequest): Promise<AuthResponse> {
         let response = {} as AuthResponse
         try {
             response = await this.request<AuthResponse>('/auth/login', {
@@ -107,7 +107,13 @@ class ApiClient {
                 body: JSON.stringify(credentials),
             });
         } catch (error) {
-            return error as Error
+            if (error instanceof AuthError) {
+                throw error as AuthError
+            } else if (error instanceof Error) {
+                throw new Error(error.message)
+            } else {
+                throw new Error('Unexpected Error')
+            }
         }
 
         return response;
@@ -118,10 +124,21 @@ class ApiClient {
      * Cookie is automatically stored by browser
      */
     async register(userData: RegisterRequest): Promise<AuthResponse> {
-        const response = await this.request<AuthResponse>('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify(userData),
-        });
+        let response = {} as AuthResponse
+        try {
+            response = await this.request<AuthResponse>('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify(userData),
+            });
+        } catch (error) {
+            if (error instanceof AuthError) {
+                throw error as AuthError
+            } else if (error instanceof Error) {
+                throw new Error(error.message)
+            } else {
+                throw new Error('Unexpected Error')
+            }
+        }
 
         return response;
     }
@@ -130,10 +147,21 @@ class ApiClient {
      * Get current user from jwt stored in the http cookie
      */
     async me(): Promise<User> {
-        const response = await this.request<User>('/auth/me', {
-            method: 'GET',
-            credentials: 'include',
-        })
+        let response = {} as User
+        try {
+            response = await this.request<User>('/auth/me', {
+                method: 'GET',
+                credentials: 'include',
+            })
+        } catch (error) {
+            if (error instanceof AuthError) {
+                throw error as AuthError
+            } else if (error instanceof Error) {
+                throw new Error(error.message)
+            } else {
+                throw new Error('Unexpected Error')
+            }
+        }
 
         return response;
     }

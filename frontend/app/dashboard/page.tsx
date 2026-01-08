@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
 
@@ -9,23 +9,7 @@ export default function DashboardPage() {
     const { user, isAuthenticated, isLoading, logout, } = useAuth();
     const [error, setError] = useState<string | null>(null);
 
-    if (isLoading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-zinc-600 dark:text-zinc-400">Loading...</p>
-                </div>
-            </div>
-        );
-    }
 
-    if (!isAuthenticated) {
-        console.log("Unauthenticated")
-        return null; // Will redirect
-    } else {
-        console.log("AUTHENTICATED!!")
-    }
 
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,6 +25,26 @@ export default function DashboardPage() {
         }
     };
 
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push('/login')
+        }
+    }, [isLoading, isAuthenticated, router])
+
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-zinc-600 dark:text-zinc-400">Loading...</p>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             {/* Header */}

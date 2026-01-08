@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/components/auth';
+import { AuthError } from '@/lib/api/auth';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -24,7 +25,7 @@ export default function LoginPage() {
             // Redirect to dashboard on success
             router.push('/dashboard');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed');
+            setError((err instanceof AuthError || err instanceof Error) ? err.message : 'Login failed');
         } finally {
             setIsLoading(false);
         }

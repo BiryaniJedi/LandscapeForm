@@ -11,10 +11,6 @@ import (
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/users"
 )
 
-type contextKey string
-
-const UserIdContextKey contextKey = "userID"
-
 // AuthMiddleware validates JWT tokens and loads current user data from database
 // This ensures we always have the latest user role and pending status
 func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Handler {
