@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/components/auth';
-import { AuthError } from '@/lib/api/auth';
+import { AuthError } from '@/lib/api/types';
 
 export default function LoginPage() {
     const router = useRouter();

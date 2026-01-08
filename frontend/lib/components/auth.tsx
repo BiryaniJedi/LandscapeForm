@@ -5,8 +5,9 @@
  * Manages authentication state across the application
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api, User, AuthError } from '../api/auth';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { User, AuthError } from '../api/types';
+import { authClient } from '../api/auth'
 
 interface AuthContextType {
     user: User | null;
@@ -30,7 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // fetch user from db on mount 
+    const refreshUser = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await authClient.me();
+            setUser(response);
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // fetch user from db on mount
     useEffect(() => {
         const init = async () => {
             try {
@@ -41,16 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         init();
-    }, []);
+    }, [refreshUser]);
 
     const login = async (username: string, password: string) => {
         setIsLoading(true);
         try {
-            const response = await api.login({ username, password });
+            const response = await authClient.login({ username, password });
             setUser(response.user);
         } catch (error) {
-            if (error instanceof AuthError)
-                throw error as AuthError
             throw error;
         } finally {
             setIsLoading(false);
@@ -66,25 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
         setIsLoading(true);
         try {
-            const response = await api.register(userData);
+            const response = await authClient.register(userData);
             setUser(response.user);
         } catch (error) {
-            if (error instanceof AuthError)
-                throw error as AuthError
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const refreshUser = async () => {
-        setIsLoading(true);
-        try {
-            const response = await api.me();
-            setUser(response);
-        } catch (error) {
-            if (error instanceof AuthError)
-                throw error as AuthError
             throw error;
         } finally {
             setIsLoading(false);
@@ -92,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
-        await api.logout();
+        await authClient.logout();
         setUser(null);
     };
 
