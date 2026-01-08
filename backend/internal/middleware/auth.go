@@ -11,6 +11,10 @@ import (
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/users"
 )
 
+type contextKey string
+
+const UserIdContextKey contextKey = "userID"
+
 // AuthMiddleware validates JWT tokens and loads current user data from database
 // This ensures we always have the latest user role and pending status
 func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Handler {
@@ -50,8 +54,7 @@ func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Ha
 				return
 			}
 
-			// IMPORTANT: Query database to get current user role and status
-			// Never trust the role from JWT - user role could have changed
+			// Query database to get current user role and status
 			user, err := usersRepo.GetUserById(r.Context(), claims.UserID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
@@ -63,6 +66,9 @@ func AuthMiddleware(usersRepo *users.UsersRepository) func(http.Handler) http.Ha
 				http.Error(w, `{"error":"Internal Server Error","message":"Failed to verify user"}`, http.StatusInternalServerError)
 				return
 			}
+
+			// Debug Info:
+			//fmt.Printf("From auth middleware:\n\t- userID: %s\n\t- userRole: %s\n\t- userPending: %v\n", user.ID, user.Role, user.Pending)
 
 			// Add user info to request context
 			ctx := context.WithValue(r.Context(), "userID", user.ID)

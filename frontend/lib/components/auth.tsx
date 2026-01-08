@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api, User } from './api';
+import { api, User } from '../api/auth';
 
 interface AuthContextType {
     user: User | null;
@@ -21,6 +21,7 @@ interface AuthContextType {
         password: string;
     }) => Promise<void>;
     logout: () => void;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,24 +33,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Load user from localStorage on mount
     useEffect(() => {
         try {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-            }
+            refreshUser();
         } catch (error) {
-            console.error('Failed to load user from localStorage:', error);
+            console.error('Failed to fetch user:', error);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
     const login = async (username: string, password: string) => {
+        setIsLoading(true);
         try {
             const response = await api.login({ username, password });
             setUser(response.user);
             localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
             throw error;
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -60,12 +61,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: string;
         password: string;
     }) => {
+        setIsLoading(true);
         try {
             const response = await api.register(userData);
             setUser(response.user);
             localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
             throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const refreshUser = async () => {
+        setIsLoading(true);
+        try {
+            const response = await api.me();
+            if (typeof (response))
+                setUser(response);
+            localStorage.setItem('user', JSON.stringify(response));
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -75,13 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('user');
     };
 
-    const value = {
+    const value: AuthContextType = {
         user,
         isAuthenticated: !!user,
         isLoading,
         login,
         register,
         logout,
+        refreshUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

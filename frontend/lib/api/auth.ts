@@ -36,9 +36,11 @@ export interface AuthResponse {
     user: User;
 }
 
-export interface ApiError {
-    error: string;
-    message: string;
+export class AuthError extends Error {
+    constructor(message = 'Unauthorized') {
+        super(message);
+        this.name = 'AuthError'
+    }
 }
 
 class ApiClient {
@@ -70,12 +72,9 @@ class ApiClient {
                 credentials: 'include',
             });
 
-            // Handle 401 Unauthorized - redirect to login
+            // Handle 401 Unauthorized 
             if (response.status === 401) {
-                if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
-                throw new Error('Unauthorized');
+                throw new AuthError();
             }
 
             // Parse response body
@@ -83,13 +82,13 @@ class ApiClient {
 
             // Handle non-OK responses
             if (!response.ok) {
-                const error = data as ApiError;
-                throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
+                const error = data as AuthError;
+                throw new AuthError(error.message || `HTTP ${response.status}: ${response.statusText}`);
             }
 
             return data as T;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof AuthError) {
                 throw error;
             }
             throw new Error('An unexpected error occurred');
@@ -100,11 +99,16 @@ class ApiClient {
      * Login user
      * Cookie is automatically stored by browser
      */
-    async login(credentials: LoginRequest): Promise<AuthResponse> {
-        const response = await this.request<AuthResponse>('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify(credentials),
-        });
+    async login(credentials: LoginRequest): Promise<AuthResponse | Error> {
+        let response = {} as AuthResponse
+        try {
+            response = await this.request<AuthResponse>('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify(credentials),
+            });
+        } catch (error) {
+            return error as Error
+        }
 
         return response;
     }
@@ -118,6 +122,18 @@ class ApiClient {
             method: 'POST',
             body: JSON.stringify(userData),
         });
+
+        return response;
+    }
+
+    /**
+     * Get current user from jwt stored in the http cookie
+     */
+    async me(): Promise<User> {
+        const response = await this.request<User>('/auth/me', {
+            method: 'GET',
+            credentials: 'include',
+        })
 
         return response;
     }

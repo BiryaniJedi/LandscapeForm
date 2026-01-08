@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/auth"
+	"github.com/BiryaniJedi/LandscapeForm-backend/internal/middleware"
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/users"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -38,8 +39,8 @@ type RegisterRequest struct {
 	Password    string    `json:"password"`
 }
 
-// LoginOrRegisterResponse represents the login response body
-type LoginOrRegisterResponse struct {
+// AuthUserResponse represents the login response body
+type AuthUserResponse struct {
 	Token string           `json:"token"`
 	User  FullUserResponse `json:"user"`
 }
@@ -113,7 +114,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Username:  user.Username,
 	}
 
-	respondJSON(w, http.StatusOK, LoginOrRegisterResponse{
+	respondJSON(w, http.StatusOK, AuthUserResponse{
 		Token: token,
 		User:  userResponse,
 	})
@@ -186,7 +187,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Username:  userFull.Username,
 	}
 
-	respondJSON(w, http.StatusCreated, LoginOrRegisterResponse{
+	respondJSON(w, http.StatusCreated, AuthUserResponse{
 		Token: token,
 		User:  userResponse,
 	})
@@ -208,4 +209,89 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message": "Logged out successfully",
 	})
+}
+
+// Me handles GET /api/auth/me
+// Route protected already, two layers redundant
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	// fmt.Printf("r.Context(): %#v\n", r.Context())
+
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		// fmt.Printf("userID not ok: %v\n", userID)
+		http.Error(w, "unauthorized: userID not ok", http.StatusUnauthorized)
+		return
+	}
+	// fmt.Printf("userID: %v\n", userID)
+
+	/* Degbug Info
+	role, ok := middleware.GetUserRole(r.Context())
+	if !ok {
+		fmt.Printf("userRole not ok: %v\n", role)
+		http.Error(w, "unauthorized: role not OK", http.StatusUnauthorized)
+		return
+	}
+	fmt.Printf("userRole: %v\n", role)
+
+	pending, ok := middleware.GetUserPending(r.Context())
+	if !ok {
+		fmt.Printf("userPending not ok: %v\n", pending)
+		http.Error(w, "unauthorized: pending not OK", http.StatusUnauthorized)
+		return
+	}
+
+	fmt.Printf("userPending: %v\n", pending)
+
+	fmt.Printf("User id: %v\nRole: %v\nPending: %v\n", userID, role, pending)
+	*/
+
+	user, err := h.repo.GetUserById(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	/*  Not used anymore, using middleware
+	cookie, err := r.Cookie("auth_token")
+	if err != nil {
+		respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	tokenStr := cookie.Value
+	fmt.Printf("tokenStr: %s\f", tokenStr)
+
+	claims, err := auth.ValidateToken(tokenStr)
+	if err != nil {
+		respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	user, err := h.repo.GetUserById(r.Context(), claims.UserID)
+	if err != nil {
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	fmt.Printf("User: %+v\n", user)
+	*/
+
+	// Prepare response (don't include password hash)
+	userResponse := FullUserResponse{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Pending:   user.Pending,
+		Role:      user.Role,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		DoB:       user.DateOfBirth,
+		Username:  user.Username,
+	}
+
+	respondJSON(w, http.StatusOK, userResponse)
 }

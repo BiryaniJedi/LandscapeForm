@@ -51,6 +51,7 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 	r.Post("/api/auth/login", authHandler.Login)       // POST /api/auth/login
 	r.Post("/api/auth/register", authHandler.Register) // POST /api/auth/register
 	r.Post("/api/auth/logout", authHandler.Logout)     // POST /api/auth/logout
+	//r.Get("/api/auth/me", authHandler.Me)
 
 	/*// User registration (public)
 	r.Post("/api/users", usersHandler.CreateUser) // POST /api/users
@@ -59,13 +60,14 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 	// Protected routes (require authentication and approved account)
 	r.Route("/api", func(r chi.Router) {
 		// Apply auth middleware - validates JWT and loads user from DB
-		r.Use(middleware.AuthMiddleware(usersRepo))
 
-		// Require user to be approved (not pending)
-		r.Use(middleware.RequireApproved)
+		r.Use(middleware.AuthMiddleware(usersRepo))
+		r.Get("/auth/me", authHandler.Me)
 
 		// Forms endpoints (require authentication + approved account)
 		r.Route("/forms", func(r chi.Router) {
+			// Require user to be approved (not pending)
+			r.Use(middleware.RequireApproved)
 			r.Get("/", formsHandler.ListForms)                     // GET /api/forms
 			r.Post("/shrub", formsHandler.CreateShrubForm)         // POST /api/forms/shrub
 			r.Post("/pesticide", formsHandler.CreatePesticideForm) // POST /api/forms/pesticide

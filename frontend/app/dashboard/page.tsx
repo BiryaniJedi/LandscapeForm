@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/components/auth';
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { user, isAuthenticated, isLoading, logout } = useAuth();
+    const { user, isAuthenticated, isLoading, logout, } = useAuth();
     const [error, setError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, isLoading, router]);
 
     if (isLoading) {
         return (
@@ -28,13 +21,15 @@ export default function DashboardPage() {
     }
 
     if (!isAuthenticated) {
+        console.log("Unauthenticated")
         return null; // Will redirect
+    } else {
+        console.log("AUTHENTICATED!!")
     }
 
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
-        setIsSubmitting(true);
 
         try {
             logout();
@@ -43,7 +38,6 @@ export default function DashboardPage() {
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Logout Failed');
         } finally {
-            setIsSubmitting(false);
         }
     };
 
