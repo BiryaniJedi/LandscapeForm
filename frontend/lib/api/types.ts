@@ -37,12 +37,6 @@ export interface AuthResponse {
     user: User;
 }
 
-export class AuthError extends Error {
-    constructor(message = 'Unauthorized') {
-        super(message);
-        this.name = 'AuthError'
-    }
-}
 
 // ============================================================================
 // Forms API Request Types (match backend/internal/handlers/types.go)
@@ -154,5 +148,12 @@ export class FormServerError extends Error {
     constructor(message = 'Server error while processing form') {
         super(message);
         this.name = 'FormServerError';
+    }
+}
+
+export class AuthError extends Error {
+    constructor(message = 'Unauthorized') {
+        super(message);
+        this.name = 'AuthError'
     }
 }
