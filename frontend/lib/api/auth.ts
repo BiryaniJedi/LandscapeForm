@@ -1,11 +1,10 @@
+import { User, LoginRequest, RegisterRequest, AuthResponse } from './types'
+import ApiClient from './common'
+
 /**
  * Auth Client for Landscaping Forms Backend auth routes
  * Handles all HTTP requests to the Go backend API auth routes
  */
-
-import { User, LoginRequest, RegisterRequest, AuthResponse } from './types'
-import ApiClient from './common'
-
 class AuthClient extends ApiClient {
     /**
      * Login user
