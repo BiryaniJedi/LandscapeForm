@@ -6,7 +6,6 @@ package forms
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -24,31 +23,41 @@ func NewFormsRepository(database *sql.DB) *FormsRepository {
 }
 
 // CreateFormInput contains the common fields required to create a new form.
-type CreateFormInput struct {
+type CreateShrubFormInput struct {
 	CreatedBy string
 	FirstName string
 	LastName  string
 	HomePhone string
+	NumShrubs int
+}
+type CreatePesticideFormInput struct {
+	CreatedBy     string
+	FirstName     string
+	LastName      string
+	HomePhone     string
+	PesticideName string
 }
 
 // UpdateFormInput contains the fields that may be updated on an existing form.
-type UpdateFormInput struct {
+type UpdateShrubFormInput struct {
 	FirstName string
 	LastName  string
 	HomePhone string
+	NumShrubs int
+}
+type UpdatePesticideFormInput struct {
+	FirstName     string
+	LastName      string
+	HomePhone     string
+	PesticideName string
 }
 
 // CreateShrubForm creates a new shrub form and its associated shrub details.
 // The operation is atomic and will fail if shrub details are not provided.
 func (r *FormsRepository) CreateShrubForm(
 	ctx context.Context,
-	formInput CreateFormInput,
-	details *ShrubDetails,
+	shrubFormInput CreateShrubFormInput,
 ) (ShrubForm, error) {
-	if details == nil {
-		return ShrubForm{}, errors.New("shrub details required")
-	}
-
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return ShrubForm{}, err
@@ -67,10 +76,10 @@ func (r *FormsRepository) CreateShrubForm(
 		VALUES ($1, 'shrub', $2, $3, $4)
 		RETURNING id, created_by, created_at, form_type, updated_at, first_name, last_name, home_phone
 	`,
-		formInput.CreatedBy,
-		formInput.FirstName,
-		formInput.LastName,
-		formInput.HomePhone,
+		shrubFormInput.CreatedBy,
+		shrubFormInput.FirstName,
+		shrubFormInput.LastName,
+		shrubFormInput.HomePhone,
 	).Scan(
 		&res.Form.ID,
 		&res.Form.CreatedBy,
@@ -93,12 +102,12 @@ func (r *FormsRepository) CreateShrubForm(
 		VALUES ($1, $2)
 	`,
 		res.Form.ID,
-		details.NumShrubs,
+		shrubFormInput.NumShrubs,
 	)
 	if err != nil {
 		return ShrubForm{}, err
 	}
-	res.NumShrubs = details.NumShrubs
+	res.NumShrubs = shrubFormInput.NumShrubs
 
 	if err := tx.Commit(); err != nil {
 		return ShrubForm{}, err
@@ -111,13 +120,8 @@ func (r *FormsRepository) CreateShrubForm(
 // The operation is atomic and will fail if pesticide details are not provided.
 func (r *FormsRepository) CreatePesticideForm(
 	ctx context.Context,
-	formInput CreateFormInput,
-	details *PesticideDetails,
+	pesticideFormInput CreatePesticideFormInput,
 ) (PesticideForm, error) {
-	if details == nil {
-		return PesticideForm{}, errors.New("pesticide details required")
-	}
-
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return PesticideForm{}, err
@@ -136,10 +140,10 @@ func (r *FormsRepository) CreatePesticideForm(
 		VALUES ($1, 'pesticide', $2, $3, $4)
 		RETURNING id, created_by, created_at, form_type, updated_at, first_name, last_name, home_phone
 	`,
-		formInput.CreatedBy,
-		formInput.FirstName,
-		formInput.LastName,
-		formInput.HomePhone,
+		pesticideFormInput.CreatedBy,
+		pesticideFormInput.FirstName,
+		pesticideFormInput.LastName,
+		pesticideFormInput.HomePhone,
 	).Scan(
 		&res.Form.ID,
 		&res.Form.CreatedBy,
@@ -163,12 +167,12 @@ func (r *FormsRepository) CreatePesticideForm(
 		VALUES ($1, $2)
 	`,
 		res.Form.ID,
-		details.PesticideName,
+		pesticideFormInput.PesticideName,
 	)
 	if err != nil {
 		return PesticideForm{}, err
 	}
-	res.PesticideName = details.PesticideName
+	res.PesticideName = pesticideFormInput.PesticideName
 
 	if err := tx.Commit(); err != nil {
 		return PesticideForm{}, err
@@ -484,9 +488,9 @@ func (r *FormsRepository) ListAllForms(
 	return forms, nil
 }
 
-// GetFormById returns a single form owned by the given user.
+// GetFormViewById returns a single form owned by the given user.
 // It returns sql.ErrNoRows if the form does not exist or is not owned by the user.
-func (r *FormsRepository) GetFormById(
+func (r *FormsRepository) GetFormViewById(
 	ctx context.Context,
 	formID string,
 	userID string,
@@ -566,21 +570,102 @@ func (r *FormsRepository) GetFormById(
 	return view, nil
 }
 
-// UpdateFormById updates a form and its associated subtype fields.
-// The existing form type determines which subtype is updated and cannot be changed.
+// UpdateShrubFormById updates a shrub form
 // It returns sql.ErrNoRows if the form does not exist or is not owned by the user.
-func (r *FormsRepository) UpdateFormById(
+func (r *FormsRepository) UpdateShrubFormById(
 	ctx context.Context,
 	formID string,
 	userID string,
-	formInput UpdateFormInput,
-	shrub *ShrubDetails,
-	pesticide *PesticideDetails,
+	shrubFormInput UpdateShrubFormInput,
 ) (*FormView, error) {
-	if shrub != nil && pesticide != nil {
-		return nil, errors.New("only one of shrub or pesticide details allowed")
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var (
+		view     *FormView
+		form     Form
+		shrubRow shrubRow
+	)
+
+	err = tx.QueryRowContext(ctx, `
+		UPDATE forms
+		SET first_name = $1,
+			last_name = $2,
+			home_phone = $3
+		WHERE id = $4 AND created_by = $5
+		RETURNING 
+			id, 
+			created_by, 
+			created_at,
+			form_type,
+			updated_at, 
+			first_name, 
+			last_name, 
+			home_phone
+	`,
+		shrubFormInput.FirstName,
+		shrubFormInput.LastName,
+		shrubFormInput.HomePhone,
+		formID,
+		userID,
+	).Scan(
+		&form.ID,
+		&form.CreatedBy,
+		&form.CreatedAt,
+		&form.FormType,
+		&form.UpdatedAt,
+		&form.FirstName,
+		&form.LastName,
+		&form.HomePhone,
+	)
+	if err != nil {
+		return nil, err
 	}
 
+	var query string
+	query = `
+		UPDATE shrubs
+		SET num_shrubs = $1
+		WHERE form_id = $2
+		RETURNING num_shrubs
+	`
+	err = tx.QueryRowContext(ctx, query, shrubFormInput.NumShrubs, formID).Scan(
+		&shrubRow.NumShrubs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	shrubDetails, err := shrubRow.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	view = NewShrubFormView(
+		ShrubForm{
+			Form:         form,
+			ShrubDetails: shrubDetails,
+		},
+	)
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return view, nil
+}
+
+// UpdatePesticideFormById updates a pesticide form
+// It returns sql.ErrNoRows if the form does not exist or is not owned by the user.
+func (r *FormsRepository) UpdatePesticideFormById(
+	ctx context.Context,
+	formID string,
+	userID string,
+	pesticideFormInput UpdatePesticideFormInput,
+) (*FormView, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -590,7 +675,6 @@ func (r *FormsRepository) UpdateFormById(
 	var (
 		view         *FormView
 		form         Form
-		shrubRow     shrubRow
 		pesticideRow pesticideRow
 	)
 
@@ -610,9 +694,9 @@ func (r *FormsRepository) UpdateFormById(
 			last_name, 
 			home_phone
 	`,
-		formInput.FirstName,
-		formInput.LastName,
-		formInput.HomePhone,
+		pesticideFormInput.FirstName,
+		pesticideFormInput.LastName,
+		pesticideFormInput.HomePhone,
 		formID,
 		userID,
 	).Scan(
@@ -630,68 +714,30 @@ func (r *FormsRepository) UpdateFormById(
 	}
 
 	var query string
-	switch form.FormType {
-	case "shrub":
-		if shrub == nil {
-			return nil, errors.New("missing shrub details")
-		}
-		query = `
-			UPDATE shrubs
-			SET num_shrubs = $1
-			WHERE form_id = $2
-			RETURNING num_shrubs
-		`
-		err = tx.QueryRowContext(ctx, query, shrub.NumShrubs, formID).Scan(
-			&shrubRow.NumShrubs,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		shrubDetails, err := shrubRow.ToDomain()
-		if err != nil {
-			return nil, err
-		}
-
-		view = NewShrubFormView(
-			ShrubForm{
-				Form:         form,
-				ShrubDetails: shrubDetails,
-			},
-		)
-
-	case "pesticide":
-		if pesticide == nil {
-			return nil, errors.New("missing pesticide details")
-		}
-		query = `
-			UPDATE pesticides 
-			SET pesticide_name = $1
-			WHERE form_id = $2
-			RETURNING pesticide_name
-		`
-
-		err = tx.QueryRowContext(ctx, query, pesticide.PesticideName, formID).Scan(
-			&pesticideRow.PesticideName,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		pesticideDetails, err := pesticideRow.ToDomain()
-		if err != nil {
-			return nil, err
-		}
-
-		view = NewPesticideFormView(
-			PesticideForm{
-				Form:             form,
-				PesticideDetails: pesticideDetails,
-			},
-		)
-	default:
-		return nil, fmt.Errorf("unknown form_type: %s", form.FormType)
+	query = `
+		UPDATE pesticides
+		SET pesticide_name = $1
+		WHERE form_id = $2
+		RETURNING pesticide_name
+	`
+	err = tx.QueryRowContext(ctx, query, pesticideFormInput.PesticideName, formID).Scan(
+		&pesticideRow.PesticideName,
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	pesticideDetails, err := pesticideRow.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	view = NewPesticideFormView(
+		PesticideForm{
+			Form:             form,
+			PesticideDetails: pesticideDetails,
+		},
+	)
 
 	if err := tx.Commit(); err != nil {
 		return nil, err

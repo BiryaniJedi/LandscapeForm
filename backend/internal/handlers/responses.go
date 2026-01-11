@@ -34,8 +34,8 @@ func respondSuccess(w http.ResponseWriter, message string) {
 }
 
 // formViewToResponse converts a FormView from the repository to a FormResponse for the API
-func formViewToResponse(view *forms.FormView) FormResponse {
-	resp := FormResponse{
+func formViewToResponse(view *forms.FormView) FormViewResponse {
+	resp := FormViewResponse{
 		FormType: view.FormType,
 	}
 

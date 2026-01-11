@@ -34,7 +34,7 @@ type UpdatePesticideFormRequest struct {
 
 // Forms response types
 
-type FormResponse struct {
+type FormViewResponse struct {
 	ID        string    `json:"id"`
 	CreatedBy string    `json:"created_by"`
 	CreatedAt time.Time `json:"created_at"`
@@ -50,8 +50,8 @@ type FormResponse struct {
 }
 
 type ListFormsResponse struct {
-	Forms []FormResponse `json:"forms"`
-	Count int            `json:"count"`
+	Forms []FormViewResponse `json:"forms"`
+	Count int                `json:"count"`
 }
 
 // Users
