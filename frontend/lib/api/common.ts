@@ -7,12 +7,6 @@ import { AuthError, ErrorResponse } from './types'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 export default class ApiClient {
-    private baseUrl: string;
-
-    constructor(baseUrl: string) {
-        this.baseUrl = baseUrl;
-    }
-
     /**
      * Generic fetch wrapper with error handling
      * Uses session cookies for authentication
@@ -26,7 +20,7 @@ export default class ApiClient {
             ...options.headers,
         };
 
-        const url = `${this.baseUrl}${endpoint}`;
+        const url = `${API_BASE_URL}${endpoint}`;
 
         try {
             const response = await fetch(url, {
@@ -54,7 +48,7 @@ export default class ApiClient {
             if (!(error instanceof Error)) {
                 throw new Error('UNEXPECTED')
             }
-            throw new AuthError(error.message);
+            throw error;
         }
     }
 }

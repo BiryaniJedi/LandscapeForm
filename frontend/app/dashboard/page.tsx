@@ -9,8 +9,6 @@ export default function DashboardPage() {
     const { user, isAuthenticated, isLoading, logout, } = useAuth();
     const [error, setError] = useState<string | null>(null);
 
-
-
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);

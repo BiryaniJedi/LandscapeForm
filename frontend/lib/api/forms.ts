@@ -19,14 +19,7 @@ import {
 
 import ApiClient from './common'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-console.log(`API_BASE_URL: ${API_BASE_URL}`)
-
 export class FormsClient extends ApiClient {
-    constructor(baseUrl: string) {
-        super(baseUrl)
-    }
-
     async CreateShrubForm(createShrubFormRequest: CreateShrubFormRequest): Promise<FormResponse> {
         return this.request<FormResponse>('/forms/shrub', {
             method: 'POST',
@@ -43,22 +36,29 @@ export class FormsClient extends ApiClient {
         })
     }
 
-    async UpdateShrubForm(updateShrubFormRequest: UpdateShrubFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>('/forms/shrub', {
-            method: 'POST',
+    async UpdateShrubForm(formID: string, updateShrubFormRequest: UpdateShrubFormRequest): Promise<FormResponse> {
+        return this.request<FormResponse>(`/forms/shrub/${formID}`, {
+            method: 'PUT',
             body: JSON.stringify(updateShrubFormRequest),
             credentials: 'include',
         })
     }
 
-    async CreatePesticideForm(createPesticideFormRequest: CreatePesticideFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>('/forms/shrub', {
-            method: 'POST',
-            body: JSON.stringify(createPesticideFormRequest),
+    async UpdatePesticideForm(formID: string, updatePesticideFormRequest: UpdatePesticideFormRequest): Promise<FormResponse> {
+        return this.request<FormResponse>(`/forms/pesticide/${formID}`, {
+            method: 'PUT',
+            body: JSON.stringify(updatePesticideFormRequest),
+            credentials: 'include',
+        })
+    }
+
+    async GetFormView(formID: string): Promise<FormResponse> {
+        return this.request<FormResponse>(`/forms/${formID}`, {
+            method: 'GET',
             credentials: 'include',
         })
     }
 }
 
 // Export singleton instance
-export const formsClient = new FormsClient(API_BASE_URL);
+export const formsClient = new FormsClient();

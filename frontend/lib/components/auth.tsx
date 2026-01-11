@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, AuthError } from '../api/types';
+import { User } from '../api/types';
 import { authClient } from '../api/auth'
 
 interface AuthContextType {

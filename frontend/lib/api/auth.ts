@@ -3,14 +3,10 @@
  * Handles all HTTP requests to the Go backend API auth routes
  */
 
-import { User, LoginRequest, RegisterRequest, AuthResponse, AuthError, ErrorResponse } from './types'
+import { User, LoginRequest, RegisterRequest, AuthResponse } from './types'
 import ApiClient from './common'
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 class AuthClient extends ApiClient {
-    constructor(baseUrl: string) {
-        super(baseUrl)
-    }
     /**
      * Login user
      * Cookie is automatically stored by browser
@@ -54,4 +50,4 @@ class AuthClient extends ApiClient {
 }
 
 // Export singleton instance
-export const authClient = new AuthClient(API_BASE_URL);
+export const authClient = new AuthClient();
