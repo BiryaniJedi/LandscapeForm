@@ -206,7 +206,7 @@ func (h *FormsHandler) GetShrubForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, shrubForm)
+	respondJSON(w, http.StatusOK, shrubFormToResponse(shrubForm))
 }
 
 // GetPesticideForm handles GET /api/forms/pesticide/{id}
@@ -229,7 +229,7 @@ func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	respondJSON(w, http.StatusOK, pesticideForm)
+	respondJSON(w, http.StatusOK, pesticideFormToResponse(pesticideForm))
 }
 
 // GetFormView handles GET /api/forms/{id}
@@ -280,7 +280,7 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 		NumShrubs: req.NumShrubs,
 	}
 
-	formView, err := h.repo.UpdateShrubFormById(r.Context(), formID, userID, shrubFormInput)
+	shrubForm, err := h.repo.UpdateShrubFormById(r.Context(), formID, userID, shrubFormInput)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, "Form not found")
@@ -290,8 +290,7 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := formViewToResponse(formView)
-	respondJSON(w, http.StatusOK, resp)
+	respondJSON(w, http.StatusOK, shrubFormToResponse(shrubForm))
 }
 
 // UpdatePesticideForm handles PUT /api/forms/pesticide/{id}
@@ -318,7 +317,7 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 		PesticideName: req.PesticideName,
 	}
 
-	formView, err := h.repo.UpdatePesticideFormById(r.Context(), formID, userID, pesticideFormInput)
+	pesticideForm, err := h.repo.UpdatePesticideFormById(r.Context(), formID, userID, pesticideFormInput)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, "Form not found")
@@ -328,8 +327,7 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	resp := formViewToResponse(formView)
-	respondJSON(w, http.StatusOK, resp)
+	respondJSON(w, http.StatusOK, pesticideFormToResponse(pesticideForm))
 }
 
 // DeleteForm handles DELETE /api/forms/{id}

@@ -354,7 +354,7 @@ func TestGetFormById_WrongUser(t *testing.T) {
 
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
-	form, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
+	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
 		CreatedBy: user1ID,
 		FirstName: "User1",
 		LastName:  "Form",
@@ -373,7 +373,7 @@ func TestGetFormById_WrongUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// User 2 tries to access User 1's form
-	_, err = repo.GetFormViewById(ctx, form.ID, user2ID)
+	_, err = repo.GetFormViewById(ctx, shrubFormId, user2ID)
 	require.Error(t, err)
 	require.Equal(t, sql.ErrNoRows, err) // Should return ErrNoRows for authorization failure
 }
@@ -386,7 +386,7 @@ func TestUpdateShrubFormById(t *testing.T) {
 	userID := createTestUser(t, db)
 
 	// Create shrub form
-	created, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
+	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
 		CreatedBy: userID,
 		FirstName: "Original",
 		LastName:  "Name",
@@ -398,7 +398,7 @@ func TestUpdateShrubFormById(t *testing.T) {
 	// Update the form
 	updated, err := repo.UpdateShrubFormById(
 		ctx,
-		created.ID,
+		shrubFormId,
 		userID,
 		UpdateShrubFormInput{
 			FirstName: "Updated",
@@ -408,14 +408,14 @@ func TestUpdateShrubFormById(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.NotNil(t, updated.Shrub)
-	require.Equal(t, "Updated", updated.Shrub.Form.FirstName)
-	require.Equal(t, "NewName", updated.Shrub.Form.LastName)
-	require.Equal(t, "555-9999", updated.Shrub.Form.HomePhone)
-	require.Equal(t, 10, updated.Shrub.ShrubDetails.NumShrubs)
+	require.NotNil(t, updated)
+	require.Equal(t, "Updated", updated.FirstName)
+	require.Equal(t, "NewName", updated.LastName)
+	require.Equal(t, "555-9999", updated.HomePhone)
+	require.Equal(t, 10, updated.NumShrubs)
 
 	// Verify updated_at changed
-	require.True(t, updated.Shrub.Form.UpdatedAt.After(created.Form.CreatedAt))
+	require.True(t, updated.UpdatedAt.After(updated.CreatedAt))
 }
 
 func TestUpdatePesticideFormById(t *testing.T) {
@@ -426,7 +426,7 @@ func TestUpdatePesticideFormById(t *testing.T) {
 	userID := createTestUser(t, db)
 
 	// Create pesticide form
-	created, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
+	pesticideFormId, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
 		CreatedBy:     userID,
 		FirstName:     "Jane",
 		LastName:      "Doe",
@@ -438,7 +438,7 @@ func TestUpdatePesticideFormById(t *testing.T) {
 	// Update the form
 	updated, err := repo.UpdatePesticideFormById(
 		ctx,
-		created.ID,
+		pesticideFormId,
 		userID,
 		UpdatePesticideFormInput{
 			FirstName:     "Janet",
@@ -448,11 +448,11 @@ func TestUpdatePesticideFormById(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.NotNil(t, updated.Pesticide)
-	require.Equal(t, "Janet", updated.Pesticide.Form.FirstName)
-	require.Equal(t, "Smith", updated.Pesticide.Form.LastName)
-	require.Equal(t, "555-2222", updated.Pesticide.Form.HomePhone)
-	require.Equal(t, "NewSpray", updated.Pesticide.PesticideDetails.PesticideName)
+	require.NotNil(t, updated)
+	require.Equal(t, "Janet", updated.FirstName)
+	require.Equal(t, "Smith", updated.LastName)
+	require.Equal(t, "555-2222", updated.HomePhone)
+	require.Equal(t, "NewSpray", updated.PesticideName)
 }
 
 func TestUpdateShrubFormById_WrongUser(t *testing.T) {
@@ -462,7 +462,7 @@ func TestUpdateShrubFormById_WrongUser(t *testing.T) {
 
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
-	form, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
+	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
 		CreatedBy: user1ID,
 		FirstName: "User1",
 		LastName:  "Form",
@@ -483,7 +483,7 @@ func TestUpdateShrubFormById_WrongUser(t *testing.T) {
 	// User 2 tries to update User 1's form
 	_, err = repo.UpdateShrubFormById(
 		ctx,
-		form.ID,
+		shrubFormId,
 		user2ID,
 		UpdateShrubFormInput{
 			FirstName: "Hacked",
@@ -503,7 +503,7 @@ func TestUpdatePesticideFormById_WrongUser(t *testing.T) {
 
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
-	form, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
+	pesticideFormId, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
 		CreatedBy:     user1ID,
 		FirstName:     "User1",
 		LastName:      "Form",
@@ -524,7 +524,7 @@ func TestUpdatePesticideFormById_WrongUser(t *testing.T) {
 	// User 2 tries to update User 1's form
 	_, err = repo.UpdatePesticideFormById(
 		ctx,
-		form.ID,
+		pesticideFormId,
 		user2ID,
 		UpdatePesticideFormInput{
 			FirstName:     "Hacked",
@@ -545,7 +545,7 @@ func TestDeleteFormById_Success(t *testing.T) {
 	userID := createTestUser(t, db)
 
 	// Create form
-	form, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
+	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
 		CreatedBy: userID,
 		FirstName: "Delete",
 		LastName:  "Me",
@@ -555,17 +555,17 @@ func TestDeleteFormById_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Delete form
-	err = repo.DeleteFormById(ctx, form.ID, userID)
+	err = repo.DeleteFormById(ctx, shrubFormId, userID)
 	require.NoError(t, err)
 
 	// Verify it's gone
-	_, err = repo.GetFormViewById(ctx, form.ID, userID)
+	_, err = repo.GetFormViewById(ctx, shrubFormId, userID)
 	require.Error(t, err)
 	require.Equal(t, sql.ErrNoRows, err)
 
 	// Verify shrub details also deleted (cascade)
 	var count int
-	err = db.QueryRow(`SELECT COUNT(*) FROM shrubs WHERE form_id = $1`, form.ID).Scan(&count)
+	err = db.QueryRow(`SELECT COUNT(*) FROM shrubs WHERE form_id = $1`, shrubFormId).Scan(&count)
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
 }
@@ -577,7 +577,7 @@ func TestDeleteFormById_WrongUser(t *testing.T) {
 
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
-	form, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
+	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
 		CreatedBy: user1ID,
 		FirstName: "User1",
 		LastName:  "Form",
@@ -596,12 +596,12 @@ func TestDeleteFormById_WrongUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// User 2 tries to delete User 1's form
-	err = repo.DeleteFormById(ctx, form.ID, user2ID)
+	err = repo.DeleteFormById(ctx, shrubFormId, user2ID)
 	require.Error(t, err)
 	require.Equal(t, sql.ErrNoRows, err)
 
 	// Verify form still exists for user 1
-	_, err = repo.GetFormViewById(ctx, form.ID, user1ID)
+	_, err = repo.GetFormViewById(ctx, shrubFormId, user1ID)
 	require.NoError(t, err)
 }
 

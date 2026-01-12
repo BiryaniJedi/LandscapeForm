@@ -655,18 +655,14 @@ func (r *FormsRepository) UpdateShrubFormById(
 	formID string,
 	userID string,
 	shrubFormInput UpdateShrubFormInput,
-) (*FormView, error) {
+) (ShrubForm, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %w", err)
+		return ShrubForm{}, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	var (
-		view     *FormView
-		form     Form
-		shrubRow shrubRow
-	)
+	var shrubForm ShrubForm
 
 	err = tx.QueryRowContext(ctx, `
 		UPDATE forms
@@ -690,18 +686,18 @@ func (r *FormsRepository) UpdateShrubFormById(
 		formID,
 		userID,
 	).Scan(
-		&form.ID,
-		&form.CreatedBy,
-		&form.CreatedAt,
-		&form.FormType,
-		&form.UpdatedAt,
-		&form.FirstName,
-		&form.LastName,
-		&form.HomePhone,
+		&shrubForm.ID,
+		&shrubForm.CreatedBy,
+		&shrubForm.CreatedAt,
+		&shrubForm.FormType,
+		&shrubForm.UpdatedAt,
+		&shrubForm.FirstName,
+		&shrubForm.LastName,
+		&shrubForm.HomePhone,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return nil, err
+		return shrubForm, err
 	}
 
 	var query string
@@ -712,30 +708,18 @@ func (r *FormsRepository) UpdateShrubFormById(
 		RETURNING num_shrubs
 	`
 	err = tx.QueryRowContext(ctx, query, shrubFormInput.NumShrubs, formID).Scan(
-		&shrubRow.NumShrubs,
+		&shrubForm.NumShrubs,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return nil, err
+		return ShrubForm{}, err
 	}
-
-	shrubDetails, err := shrubRow.ToDomain()
-	if err != nil {
-		return nil, fmt.Errorf("error casting row to shrub form: %w", err)
-	}
-
-	view = NewShrubFormView(
-		ShrubForm{
-			Form:         form,
-			ShrubDetails: shrubDetails,
-		},
-	)
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return ShrubForm{}, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return view, nil
+	return shrubForm, nil
 }
 
 // UpdatePesticideFormById updates a pesticide form
@@ -745,18 +729,14 @@ func (r *FormsRepository) UpdatePesticideFormById(
 	formID string,
 	userID string,
 	pesticideFormInput UpdatePesticideFormInput,
-) (*FormView, error) {
+) (PesticideForm, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %w", err)
+		return PesticideForm{}, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	var (
-		view         *FormView
-		form         Form
-		pesticideRow pesticideRow
-	)
+	var pesticideForm PesticideForm
 
 	err = tx.QueryRowContext(ctx, `
 		UPDATE forms
@@ -780,18 +760,18 @@ func (r *FormsRepository) UpdatePesticideFormById(
 		formID,
 		userID,
 	).Scan(
-		&form.ID,
-		&form.CreatedBy,
-		&form.CreatedAt,
-		&form.FormType,
-		&form.UpdatedAt,
-		&form.FirstName,
-		&form.LastName,
-		&form.HomePhone,
+		&pesticideForm.ID,
+		&pesticideForm.CreatedBy,
+		&pesticideForm.CreatedAt,
+		&pesticideForm.FormType,
+		&pesticideForm.UpdatedAt,
+		&pesticideForm.FirstName,
+		&pesticideForm.LastName,
+		&pesticideForm.HomePhone,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return nil, err
+		return PesticideForm{}, err
 	}
 
 	var query string
@@ -802,30 +782,18 @@ func (r *FormsRepository) UpdatePesticideFormById(
 		RETURNING pesticide_name
 	`
 	err = tx.QueryRowContext(ctx, query, pesticideFormInput.PesticideName, formID).Scan(
-		&pesticideRow.PesticideName,
+		&pesticideForm.PesticideName,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return nil, err
+		return PesticideForm{}, err
 	}
-
-	pesticideDetails, err := pesticideRow.ToDomain()
-	if err != nil {
-		return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
-	}
-
-	view = NewPesticideFormView(
-		PesticideForm{
-			Form:             form,
-			PesticideDetails: pesticideDetails,
-		},
-	)
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return PesticideForm{}, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return view, nil
+	return pesticideForm, nil
 }
 
 // DeleteFormById deletes a form owned by the given user.

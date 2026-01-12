@@ -35,7 +35,27 @@ func respondSuccess(w http.ResponseWriter, message string) {
 
 func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
 	return ShrubFormResponse{
-		ID: shrubForm.ID,
+		ID:        shrubForm.ID,
+		CreatedBy: shrubForm.CreatedBy,
+		CreatedAt: shrubForm.CreatedAt,
+		UpdatedAt: shrubForm.UpdatedAt,
+		FirstName: shrubForm.FirstName,
+		LastName:  shrubForm.LastName,
+		HomePhone: shrubForm.HomePhone,
+		NumShrubs: shrubForm.NumShrubs,
+	}
+}
+
+func pesticideFormToResponse(pesticideForm forms.PesticideForm) PesticideFormResponse {
+	return PesticideFormResponse{
+		ID:            pesticideForm.ID,
+		CreatedBy:     pesticideForm.CreatedBy,
+		CreatedAt:     pesticideForm.CreatedAt,
+		UpdatedAt:     pesticideForm.UpdatedAt,
+		FirstName:     pesticideForm.FirstName,
+		LastName:      pesticideForm.LastName,
+		HomePhone:     pesticideForm.HomePhone,
+		PesticideName: pesticideForm.PesticideName,
 	}
 }
 
