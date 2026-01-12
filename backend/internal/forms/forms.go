@@ -91,7 +91,7 @@ func (r *FormsRepository) CreateShrubForm(
 		&res.Form.HomePhone,
 	)
 	if err != nil {
-		return ShrubForm{}, err
+		return ShrubForm{}, fmt.Errorf("Failed to insert form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
 	}
 
 	_, err = tx.ExecContext(ctx, `
@@ -105,12 +105,12 @@ func (r *FormsRepository) CreateShrubForm(
 		shrubFormInput.NumShrubs,
 	)
 	if err != nil {
-		return ShrubForm{}, err
+		return ShrubForm{}, fmt.Errorf("Failed to insert shrub form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
 	}
 	res.NumShrubs = shrubFormInput.NumShrubs
 
 	if err := tx.Commit(); err != nil {
-		return ShrubForm{}, err
+		return ShrubForm{}, fmt.Errorf("Failed to commit transaction for inserting shrub form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
 	}
 
 	return res, nil
@@ -156,7 +156,7 @@ func (r *FormsRepository) CreatePesticideForm(
 	)
 
 	if err != nil {
-		return PesticideForm{}, err
+		return PesticideForm{}, fmt.Errorf("Failed to insert form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
 	}
 
 	_, err = tx.ExecContext(ctx, `
@@ -170,12 +170,12 @@ func (r *FormsRepository) CreatePesticideForm(
 		pesticideFormInput.PesticideName,
 	)
 	if err != nil {
-		return PesticideForm{}, err
+		return PesticideForm{}, fmt.Errorf("Failed to insert pesticide form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
 	}
 	res.PesticideName = pesticideFormInput.PesticideName
 
 	if err := tx.Commit(); err != nil {
-		return PesticideForm{}, err
+		return PesticideForm{}, fmt.Errorf("Failed to commit transaction for inserting pesticide form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
 	}
 
 	return res, nil
@@ -275,7 +275,7 @@ func (r *FormsRepository) ListFormsByUserId(
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query rows for forms list: %w", err)
 	}
 	defer rows.Close()
 
@@ -300,7 +300,7 @@ func (r *FormsRepository) ListFormsByUserId(
 			&pesticide.PesticideName,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
 
 		var view *FormView
@@ -308,7 +308,7 @@ func (r *FormsRepository) ListFormsByUserId(
 		case "shrub":
 			shrubDetails, err := shrub.ToDomain()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error casting row to shrub form %w", err)
 			}
 			view = NewShrubFormView(
 				ShrubForm{
@@ -320,7 +320,7 @@ func (r *FormsRepository) ListFormsByUserId(
 		case "pesticide":
 			pesticideDetails, err := pesticide.ToDomain()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
 			}
 			view = NewPesticideFormView(
 				PesticideForm{
@@ -335,7 +335,7 @@ func (r *FormsRepository) ListFormsByUserId(
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error after list forms queries: %w", err)
 	}
 
 	return forms, nil
@@ -422,7 +422,7 @@ func (r *FormsRepository) ListAllForms(
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error querying rows for forms list: %w", err)
 	}
 	defer rows.Close()
 
@@ -447,7 +447,7 @@ func (r *FormsRepository) ListAllForms(
 			&pesticide.PesticideName,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
 
 		var view *FormView
@@ -455,7 +455,7 @@ func (r *FormsRepository) ListAllForms(
 		case "shrub":
 			shrubDetails, err := shrub.ToDomain()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error casting row to shrub form: %w", err)
 			}
 			view = NewShrubFormView(
 				ShrubForm{
@@ -467,7 +467,7 @@ func (r *FormsRepository) ListAllForms(
 		case "pesticide":
 			pesticideDetails, err := pesticide.ToDomain()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
 			}
 			view = NewPesticideFormView(
 				PesticideForm{
@@ -482,7 +482,7 @@ func (r *FormsRepository) ListAllForms(
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error after queries for forms list: %w", err)
 	}
 
 	return forms, nil
@@ -543,7 +543,7 @@ func (r *FormsRepository) GetFormViewById(
 	case "shrub":
 		shrubDetails, err := shrub.ToDomain()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error casting row to shrub form: %w", err)
 		}
 		view = NewShrubFormView(
 			ShrubForm{
@@ -555,7 +555,7 @@ func (r *FormsRepository) GetFormViewById(
 	case "pesticide":
 		pesticideDetails, err := pesticide.ToDomain()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
 		}
 		view = NewPesticideFormView(
 			PesticideForm{
@@ -580,7 +580,7 @@ func (r *FormsRepository) UpdateShrubFormById(
 ) (*FormView, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -622,6 +622,7 @@ func (r *FormsRepository) UpdateShrubFormById(
 		&form.HomePhone,
 	)
 	if err != nil {
+		//sql.ErrNoRows
 		return nil, err
 	}
 
@@ -636,12 +637,13 @@ func (r *FormsRepository) UpdateShrubFormById(
 		&shrubRow.NumShrubs,
 	)
 	if err != nil {
+		//sql.ErrNoRows
 		return nil, err
 	}
 
 	shrubDetails, err := shrubRow.ToDomain()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error casting row to shrub form: %w", err)
 	}
 
 	view = NewShrubFormView(
@@ -652,7 +654,7 @@ func (r *FormsRepository) UpdateShrubFormById(
 	)
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return view, nil
@@ -668,7 +670,7 @@ func (r *FormsRepository) UpdatePesticideFormById(
 ) (*FormView, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -710,6 +712,7 @@ func (r *FormsRepository) UpdatePesticideFormById(
 		&form.HomePhone,
 	)
 	if err != nil {
+		//sql.ErrNoRows
 		return nil, err
 	}
 
@@ -724,12 +727,13 @@ func (r *FormsRepository) UpdatePesticideFormById(
 		&pesticideRow.PesticideName,
 	)
 	if err != nil {
+		//sql.ErrNoRows
 		return nil, err
 	}
 
 	pesticideDetails, err := pesticideRow.ToDomain()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
 	}
 
 	view = NewPesticideFormView(
@@ -740,7 +744,7 @@ func (r *FormsRepository) UpdatePesticideFormById(
 	)
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return view, nil
