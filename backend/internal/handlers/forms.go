@@ -55,15 +55,13 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 		NumShrubs: req.NumShrubs,
 	}
 
-	shrubForm, err := h.repo.CreateShrubForm(r.Context(), shrubFormInput)
+	shrubFormId, err := h.repo.CreateShrubForm(r.Context(), shrubFormInput)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to create shrub form")
 		return
 	}
 
-	view := forms.NewShrubFormView(shrubForm)
-	resp := formViewToResponse(view)
-	respondJSON(w, http.StatusCreated, resp)
+	respondJSON(w, http.StatusCreated, CreateFormResponse{shrubFormId})
 }
 
 // CreatePesticideForm handles POST /api/forms/pesticide
@@ -89,15 +87,13 @@ func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Reques
 		PesticideName: req.PesticideName,
 	}
 
-	pesticideForm, err := h.repo.CreatePesticideForm(r.Context(), pesticideFormInput)
+	pesticideFormId, err := h.repo.CreatePesticideForm(r.Context(), pesticideFormInput)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to create pesticide form")
 		return
 	}
 
-	view := forms.NewPesticideFormView(pesticideForm)
-	resp := formViewToResponse(view)
-	respondJSON(w, http.StatusCreated, resp)
+	respondJSON(w, http.StatusCreated, CreateFormResponse{pesticideFormId})
 }
 
 // ListForms handles GET /api/forms?sort_by=created_at&order=DESC&limit=10&offset=0&type=shrub&search=john
@@ -190,7 +186,53 @@ func parseListFormsOptions(r *http.Request) forms.ListFormsOptions {
 	return opts
 }
 
-// GetFormView handles GET /api/forms/{id}, /api/forms/shrub/{id}, and /api/forms/pesticide/{id}
+// GetShrubForm handles GET /api/forms/shrub/{id}
+func (h *FormsHandler) GetShrubForm(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+
+	formID := chi.URLParam(r, "id")
+	if formID == "" {
+		respondError(w, http.StatusBadRequest, "Form ID is required")
+		return
+	}
+
+	shrubForm, err := h.repo.GetShrubFormById(r.Context(), formID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, "Form not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to fetch form")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, shrubForm)
+}
+
+// GetPesticideForm handles GET /api/forms/pesticide/{id}
+func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+
+	formID := chi.URLParam(r, "id")
+	if formID == "" {
+		respondError(w, http.StatusBadRequest, "Form ID is required")
+		return
+	}
+
+	pesticideForm, err := h.repo.GetPesticideFormById(r.Context(), formID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, http.StatusNotFound, "Form not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to fetch form")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, pesticideForm)
+}
+
+// GetFormView handles GET /api/forms/{id}
 func (h *FormsHandler) GetFormView(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 

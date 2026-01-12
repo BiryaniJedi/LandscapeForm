@@ -40,7 +40,7 @@ func TestCreateAndGetShrubForm(t *testing.T) {
 
 	userID := createTestUser(t, db)
 
-	created, err := repo.CreateShrubForm(
+	createdShrubFormId, err := repo.CreateShrubForm(
 		ctx,
 		CreateShrubFormInput{
 			CreatedBy: userID,
@@ -52,20 +52,17 @@ func TestCreateAndGetShrubForm(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Validate returned data
-	require.NotEmpty(t, created.ID)
-	require.Equal(t, "shrub", created.FormType)
-	require.Equal(t, 6, created.ShrubDetails.NumShrubs)
+	// Validate returned formID
+	require.NotEmpty(t, createdShrubFormId)
 
 	// Fetch from DB
-	got, err := repo.GetFormViewById(ctx, created.ID, userID)
+	got, err := repo.GetShrubFormById(ctx, createdShrubFormId, userID)
 	require.NoError(t, err)
 
-	require.NotNil(t, got.Shrub)
-	require.Equal(t, "Alice", got.Shrub.Form.FirstName)
-	require.Equal(t, "Gardener", got.Shrub.Form.LastName)
-	require.Equal(t, "555-1234", got.Shrub.Form.HomePhone)
-	require.Equal(t, 6, got.Shrub.ShrubDetails.NumShrubs)
+	require.Equal(t, "Alice", got.FirstName)
+	require.Equal(t, "Gardener", got.LastName)
+	require.Equal(t, "555-1234", got.HomePhone)
+	require.Equal(t, 6, got.NumShrubs)
 }
 
 func TestCreateAndGetPesticideForm(t *testing.T) {
@@ -75,7 +72,7 @@ func TestCreateAndGetPesticideForm(t *testing.T) {
 
 	userID := createTestUser(t, db)
 
-	created, err := repo.CreatePesticideForm(
+	createdPesticideFormId, err := repo.CreatePesticideForm(
 		ctx,
 		CreatePesticideFormInput{
 			CreatedBy:     userID,
@@ -87,14 +84,11 @@ func TestCreateAndGetPesticideForm(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Validate returned data
-	require.NotEmpty(t, created.ID)
-	require.Equal(t, "pesticide", created.FormType)
-	require.Equal(t, "Roundup", created.PesticideDetails.PesticideName)
-	require.Equal(t, "Bob", created.Form.FirstName)
+	// Validate returned formID
+	require.NotEmpty(t, createdPesticideFormId)
 
 	// Fetch from DB
-	got, err := repo.GetFormViewById(ctx, created.ID, userID)
+	got, err := repo.GetFormViewById(ctx, createdPesticideFormId, userID)
 	require.NoError(t, err)
 
 	require.NotNil(t, got.Pesticide)

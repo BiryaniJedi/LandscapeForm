@@ -49,9 +49,38 @@ type FormViewResponse struct {
 	PesticideName *string `json:"pesticide_name,omitempty"`
 }
 
+type ShrubFormResponse struct {
+	ID        string    `json:"id"`
+	CreatedBy string    `json:"created_by"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	FormType  string    `json:"form_type"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	HomePhone string    `json:"home_phone"`
+	//shrub form specific fields
+	NumShrubs int `json:"num_shrubs"`
+}
+
+type PesticideFormResponse struct {
+	ID        string    `json:"id"`
+	CreatedBy string    `json:"created_by"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	FormType  string    `json:"form_type"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	HomePhone string    `json:"home_phone"`
+	//pesticide form specific fields
+	PesticideName string `json:"pesticide_name"`
+}
 type ListFormsResponse struct {
 	Forms []FormViewResponse `json:"forms"`
 	Count int                `json:"count"`
+}
+
+type CreateFormResponse struct {
+	ID string `json:"id"`
 }
 
 // Users

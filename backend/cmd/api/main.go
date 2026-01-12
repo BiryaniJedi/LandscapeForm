@@ -72,12 +72,12 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 			r.Route("/shrub", func(r chi.Router) {
 				r.Post("/", formsHandler.CreateShrubForm)    // POST /api/forms/shrub
 				r.Put("/{id}", formsHandler.UpdateShrubForm) // PUT /api/forms/shrub/{id}
-				r.Get("/{id}", formsHandler.GetFormView)     // GET /api/forms/shrub/{id}
+				r.Get("/{id}", formsHandler.GetShrubForm)    // GET /api/forms/shrub/{id}
 			})
 			r.Route("/pesticide", func(r chi.Router) {
 				r.Post("/", formsHandler.CreatePesticideForm)    // POST /api/forms/pesticide
 				r.Put("/{id}", formsHandler.UpdatePesticideForm) // PUT /api/forms/pesticide/{id}
-				r.Get("/{id}", formsHandler.GetFormView)         // GET /api/forms/pesticide/{id}
+				r.Get("/{id}", formsHandler.GetPesticideForm)    // GET /api/forms/pesticide/{id}
 			})
 
 			r.Route("/{id}", func(r chi.Router) {

@@ -33,6 +33,12 @@ func respondSuccess(w http.ResponseWriter, message string) {
 	})
 }
 
+func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
+	return ShrubFormResponse{
+		ID: shrubForm.ID,
+	}
+}
+
 // formViewToResponse converts a FormView from the repository to a FormResponse for the API
 func formViewToResponse(view *forms.FormView) FormViewResponse {
 	resp := FormViewResponse{

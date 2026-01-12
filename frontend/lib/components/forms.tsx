@@ -2,8 +2,8 @@
 
 
 /**
- * Auth Context Provider
- * Manages authentication state across the application
+ * Forms Context Provider
+ * Manages CRUD operations on forms across the application
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -12,15 +12,16 @@ import {
     CreatePesticideFormRequest,
     UpdateShrubFormRequest,
     UpdatePesticideFormRequest,
+    FormResponse,
+    ListFormsResponse
 
 } from '../api/types';
 import { authClient } from '../api/auth'
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/components/auth';
+import { formsClient } from '../api/forms'
 
-interface AuthContextType {
-    formview: Form;
-    isAuthenticated: boolean;
+interface FormsContextType {
+    formview: FormResponse;
+    formviewList: ListFormsResponse;
     isLoading: boolean;
     login: (username: string, password: string) => Promise<void>;
     register: (userData: {
@@ -34,9 +35,9 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const FormsContext = createContext<FormsContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function FormsProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
-    const value: AuthContextType = {
+    const value: FormsContextType = {
         user,
         isAuthenticated: !!user,
         isLoading,
@@ -110,14 +111,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return <FormsContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 /**
  * Hook to use auth context
  */
 export function useForms() {
-    const context = useContext(AuthContext);
+    const context = useContext(FormsContext);
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
