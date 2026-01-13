@@ -23,12 +23,6 @@ export default function DashboardPage() {
         }
     };
 
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/login')
-        }
-    }, [isLoading, isAuthenticated, router])
-
     if (!isAuthenticated) {
         return null;
     }
@@ -101,6 +95,15 @@ export default function DashboardPage() {
                             <p className="text-zinc-600 dark:text-zinc-400 mb-4">
                                 This is your dashboard. Forms management features coming soon!
                             </p>
+
+                            <div className="mb-6">
+                                <button
+                                    onClick={() => router.push('/forms/shrub')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Create Shrub Form
+                                </button>
+                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">

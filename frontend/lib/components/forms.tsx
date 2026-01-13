@@ -12,7 +12,7 @@ import {
     CreatePesticideFormRequest,
     UpdateShrubFormRequest,
     UpdatePesticideFormRequest,
-    FormResponse,
+    FormViewResponse,
     ListFormsResponse
 
 } from '../api/types';
@@ -20,7 +20,7 @@ import { authClient } from '../api/auth'
 import { formsClient } from '../api/forms'
 
 interface FormsContextType {
-    formview: FormResponse;
+    formview: FormViewResponse;
     formviewList: ListFormsResponse;
     isLoading: boolean;
     login: (username: string, password: string) => Promise<void>;

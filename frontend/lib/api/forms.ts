@@ -4,13 +4,12 @@ import {
     UpdateShrubFormRequest,
     UpdatePesticideFormRequest,
     ListFormsParams,
-    FormResponse,
+    ShrubForm,
+    PesticideForm,
+    FormViewResponse,
+    CreateFormResponse,
     ListFormsResponse,
-    ErrorResponse,
-    FormNotFoundError,
-    FormValidationError,
-    FormServerError,
-    AuthError
+    SuccessResponse,
 } from './types'
 
 import ApiClient from './common'
@@ -30,14 +29,14 @@ export class FormsClient extends ApiClient {
      * Sends a `POST` request to `/api/forms/shrub` with the provided form data.
      *
      * @param createShrubFormRequest - Payload used to create the shrub form
-     * @returns A promise that resolves to the created for
+     * @returns A promise that resolves to the created form's ID
      *
      * @throws {FormValidationError} If the request payload is invalid
      * @throws {AuthError} If the user is not authenticated
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async CreateShrubForm(createShrubFormRequest: CreateShrubFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>('/forms/shrub', {
+    async createShrubForm(createShrubFormRequest: CreateShrubFormRequest): Promise<CreateFormResponse> {
+        return await this.request<CreateFormResponse>('/forms/shrub', {
             method: 'POST',
             body: JSON.stringify(createShrubFormRequest),
             credentials: 'include',
@@ -49,14 +48,14 @@ export class FormsClient extends ApiClient {
      * Sends a `POST` request to `/api/forms/pesticide`.
      *
      * @param createPesticideFormRequest - Payload used to create the pesticide form
-     * @returns A promise that resolves to the created form
+     * @returns A promise that resolves to the created form's ID
      *
      * @throws {FormValidationError} If the request payload is invalid
      * @throws {AuthError} If the user is not authenticated
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async CreatePesticideForm(createPesticideFormRequest: CreatePesticideFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>('/forms/pesticide', {
+    async createPesticideForm(createPesticideFormRequest: CreatePesticideFormRequest): Promise<CreateFormResponse> {
+        return await this.request<CreateFormResponse>('/forms/pesticide', {
             method: 'POST',
             body: JSON.stringify(createPesticideFormRequest),
             credentials: 'include',
@@ -76,8 +75,8 @@ export class FormsClient extends ApiClient {
      * @throws {FormValidationError} If the update payload is invalid
      * @throws {AuthError} If the user is not authenticated
      */
-    async UpdateShrubForm(formID: string, updateShrubFormRequest: UpdateShrubFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>(`/forms/shrub/${formID}`, {
+    async updateShrubForm(formID: string, updateShrubFormRequest: UpdateShrubFormRequest): Promise<ShrubForm> {
+        return await this.request<ShrubForm>(`/forms/shrub/${formID}`, {
             method: 'PUT',
             body: JSON.stringify(updateShrubFormRequest),
             credentials: 'include',
@@ -97,8 +96,8 @@ export class FormsClient extends ApiClient {
      * @throws {FormValidationError} If the update payload is invalid
      * @throws {AuthError} If the user is not authenticated
      */
-    async UpdatePesticideForm(formID: string, updatePesticideFormRequest: UpdatePesticideFormRequest): Promise<FormResponse> {
-        return this.request<FormResponse>(`/forms/pesticide/${formID}`, {
+    async updatePesticideForm(formID: string, updatePesticideFormRequest: UpdatePesticideFormRequest): Promise<PesticideForm> {
+        return await this.request<PesticideForm>(`/forms/pesticide/${formID}`, {
             method: 'PUT',
             body: JSON.stringify(updatePesticideFormRequest),
             credentials: 'include',
@@ -109,7 +108,7 @@ export class FormsClient extends ApiClient {
      * Retrieve a single form by its ID.
      *
      * Sends a `GET` request to `/api/forms/{formID}` and returns a
-     * generic {@link FormResponse}, regardless of form type.
+     * generic {@link FormViewResponse}, regardless of form type.
      *
      * @param formID - Unique identifier of the form to retrieve
      * @returns A promise that resolves to the requested form
@@ -117,9 +116,128 @@ export class FormsClient extends ApiClient {
      * @throws {FormNotFoundError} If the form does not exist
      * @throws {AuthError} If the user is not authenticated
      */
-    async GetFormView(formID: string): Promise<FormResponse> {
-        return this.request<FormResponse>(`/forms/${formID}`, {
+    async getFormView(formID: string): Promise<FormViewResponse> {
+        return await this.request<FormViewResponse>(`/forms/${formID}`, {
             method: 'GET',
+            credentials: 'include',
+        })
+    }
+
+    /**
+     * Retrieve a single shrub form by its ID.
+     *
+     * Sends a `GET` request to `/api/forms/shrub/{formID}` and returns a
+     * generic {@link FormViewResponse}, regardless of form type.
+     *
+     * @param formID - Unique identifier of the form to retrieve
+     * @returns A promise that resolves to the requested form
+     *
+     * @throws {FormNotFoundError} If the form does not exist
+     * @throws {AuthError} If the user is not authenticated
+     */
+    async getShrubForm(formID: string): Promise<ShrubForm> {
+        return await this.request<ShrubForm>(`/forms/shrub/${formID}`, {
+            method: 'GET',
+            credentials: 'include',
+        })
+    }
+
+    /**
+     * Retrieve a single pesticide form by its ID.
+     *
+     * Sends a `GET` request to `/api/forms/shrub/{formID}` and returns a
+     * generic {@link FormViewResponse}, regardless of form type.
+     *
+     * @param formID - Unique identifier of the form to retrieve
+     * @returns A promise that resolves to the requested form
+     *
+     * @throws {FormNotFoundError} If the form does not exist
+     * @throws {AuthError} If the user is not authenticated
+     */
+    async getPesticideForm(formID: string): Promise<PesticideForm> {
+        return await this.request<PesticideForm>(`/forms/pesticide/${formID}`, {
+            method: 'GET',
+            credentials: 'include',
+        })
+    }
+
+    /**
+     * List forms for the authenticated user.
+     *
+     * Sends a `GET` request to `/api/forms` with optional query parameters
+     * for pagination, filtering, and sorting.
+     *
+     * @param params - Optional query parameters (limit, offset, form_type, search_name, sort_by, order)
+     * @returns A promise that resolves to a list of forms and total count
+     *
+     * @throws {AuthError} If the user is not authenticated
+     * @throws {FormServerError} If the server encounters an unexpected error
+     */
+    async listFormsByUserId(params?: ListFormsParams): Promise<ListFormsResponse> {
+        const queryParams = new URLSearchParams()
+
+        if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())
+        if (params?.offset !== undefined) queryParams.append('offset', params.offset.toString())
+        if (params?.form_type) queryParams.append('type', params.form_type)
+        if (params?.search_name) queryParams.append('search', params.search_name)
+        if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
+        if (params?.order) queryParams.append('order', params.order)
+
+        const queryString = queryParams.toString()
+        const url = queryString ? `/forms?${queryString}` : '/forms'
+
+        return await this.request<ListFormsResponse>(url, {
+            method: 'GET',
+            credentials: 'include',
+        })
+    }
+
+    /**
+     * List all forms from all users (admin only).
+     *
+     * Sends a `GET` request to `/api/admin/forms` with optional query parameters
+     * for pagination, filtering, and sorting.
+     *
+     * @param params - Optional query parameters (limit, offset, form_type, search_name, sort_by, order)
+     * @returns A promise that resolves to a list of all forms and total count
+     *
+     * @throws {AuthError} If the user is not authenticated or not an admin
+     * @throws {FormServerError} If the server encounters an unexpected error
+     */
+    async listAllForms(params?: ListFormsParams): Promise<ListFormsResponse> {
+        const queryParams = new URLSearchParams()
+
+        if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())
+        if (params?.offset !== undefined) queryParams.append('offset', params.offset.toString())
+        if (params?.form_type) queryParams.append('type', params.form_type)
+        if (params?.search_name) queryParams.append('search', params.search_name)
+        if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
+        if (params?.order) queryParams.append('order', params.order)
+
+        const queryString = queryParams.toString()
+        const url = queryString ? `/admin/forms?${queryString}` : '/admin/forms'
+
+        return await this.request<ListFormsResponse>(url, {
+            method: 'GET',
+            credentials: 'include',
+        })
+    }
+
+    /**
+     * Delete a form by its ID.
+     *
+     * Sends a `DELETE` request to `/api/forms/{formID}`.
+     *
+     * @param formID - Unique identifier of the form to delete
+     * @returns A promise that resolves to a success message
+     *
+     * @throws {FormNotFoundError} If the form does not exist
+     * @throws {AuthError} If the user is not authenticated
+     * @throws {FormServerError} If the server encounters an unexpected error
+     */
+    async deleteForm(formID: string): Promise<SuccessResponse> {
+        return await this.request<SuccessResponse>(`/forms/${formID}`, {
+            method: 'DELETE',
             credentials: 'include',
         })
     }
@@ -130,4 +248,4 @@ export class FormsClient extends ApiClient {
  *
  * Use this instance for all form-related API interactions.
  */
-export const formsClient = new FormsClient(); Object
+export const formsClient = new FormsClient();

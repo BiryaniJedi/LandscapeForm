@@ -85,12 +85,54 @@ export interface ListFormsParams {
 // ============================================================================
 // Forms API Response Types (match backend/internal/handlers/types.go)
 // ============================================================================
+//
+/**
+ * ShrubForm - matches backend ShrubFormResponse exactly
+ * Contains all form fields with all shrub form specific fields
+ */
 
 /**
- * FormResponse - matches backend FormResponse exactly
+ * CreateFormResponse - wrapper for hold the recently created form's ID 
+ */
+export interface CreateFormResponse {
+    id: string;
+}
+
+export interface ShrubForm {
+    id: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    form_type: 'shrub' | 'pesticide';
+    first_name: string;
+    last_name: string;
+    home_phone: string;
+    // Shrub-specific field
+    num_shrubs: number;
+}
+
+/**
+ * PesticideForm - matches backend PesticideFormResponse exactly
+ * Contains all form fields with all pesticide form specific fields
+ */
+export interface PesticideForm {
+    id: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    form_type: 'shrub' | 'pesticide';
+    first_name: string;
+    last_name: string;
+    home_phone: string;
+    // Pesticide-specific field
+    pesticide_name: string;
+}
+
+/**
+ * FormViewResponse - matches backend FormResponse exactly
  * Contains all form fields with optional num_shrubs (shrub forms) or pesticide_name (pesticide forms)
  */
-export interface FormResponse {
+export interface FormViewResponse {
     id: string;
     created_by: string;
     created_at: string;
@@ -109,7 +151,7 @@ export interface FormResponse {
  * ListFormsResponse - matches backend ListFormsResponse exactly
  */
 export interface ListFormsResponse {
-    forms: FormResponse[];
+    forms: FormViewResponse[];
     count: number;
 }
 
