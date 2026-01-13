@@ -173,15 +173,14 @@ export class FormsClient extends ApiClient {
      * @throws {AuthError} If the user is not authenticated
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async listFormsByUserId(params?: ListFormsParams): Promise<ListFormsResponse> {
+    async listFormsByUserId(params: ListFormsParams): Promise<ListFormsResponse> {
         const queryParams = new URLSearchParams()
-
-        if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())
-        if (params?.offset !== undefined) queryParams.append('offset', params.offset.toString())
-        if (params?.form_type) queryParams.append('type', params.form_type)
-        if (params?.search_name) queryParams.append('search', params.search_name)
-        if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
-        if (params?.order) queryParams.append('order', params.order)
+        if (params.limit != null) queryParams.append('limit', params.limit.toString())
+        if (params.offset != null) queryParams.append('offset', params.offset.toString())
+        if (params.form_type) queryParams.append('type', params.form_type)
+        if (params.search_name) queryParams.append('search', params.search_name)
+        if (params.sort_by) queryParams.append('sort_by', params.sort_by)
+        if (params.order) queryParams.append('order', params.order)
 
         const queryString = queryParams.toString()
         const url = queryString ? `/forms?${queryString}` : '/forms'
@@ -207,8 +206,8 @@ export class FormsClient extends ApiClient {
     async listFormsAllUsers(params?: ListFormsParams): Promise<ListFormsResponse> {
         const queryParams = new URLSearchParams()
 
-        if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())
-        if (params?.offset !== undefined) queryParams.append('offset', params.offset.toString())
+        if (params?.limit != null) queryParams.append('limit', params.limit.toString())
+        if (params?.offset != null) queryParams.append('offset', params.offset.toString())
         if (params?.form_type) queryParams.append('type', params.form_type)
         if (params?.search_name) queryParams.append('search', params.search_name)
         if (params?.sort_by) queryParams.append('sort_by', params.sort_by)

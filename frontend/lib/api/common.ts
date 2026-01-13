@@ -40,7 +40,7 @@ export default class ApiClient {
             // Handle non-OK responses
             if (!response.ok) {
                 const error = data as ErrorResponse;
-                throw new AuthError(error.message || `HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
             }
 
             return data as T;

@@ -72,14 +72,22 @@ export interface UpdatePesticideFormRequest {
 
 /**
  * Query parameters for listing forms with pagination, filtering, and sorting
+ * 
+ *
+ * limit?: number;
+   offset?: number;
+   form_type?: 'shrub' | 'pesticide';
+   search_name?: string;
+   sort_by?: 'first_name' | 'last_name' | 'created_at';
+   order?: 'ASC' | 'DESC';
  */
 export interface ListFormsParams {
-    limit?: number;
-    offset?: number;
-    form_type?: 'shrub' | 'pesticide';
-    search_name?: string;
-    sort_by?: 'first_name' | 'last_name' | 'created_at';
-    order?: 'ASC' | 'DESC';
+    limit?: number | null;
+    offset?: number | null;
+    form_type?: string | null;
+    search_name?: string | null;
+    sort_by?: string | null;
+    order?: string | null;
 }
 
 // ============================================================================

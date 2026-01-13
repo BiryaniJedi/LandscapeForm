@@ -38,7 +38,7 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateShrubFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -57,7 +57,7 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 
 	shrubFormId, err := h.repo.CreateShrubForm(r.Context(), shrubFormInput)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to create shrub form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Reques
 
 	var req CreatePesticideFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Reques
 
 	pesticideFormId, err := h.repo.CreatePesticideForm(r.Context(), pesticideFormInput)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to create pesticide form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -105,7 +105,7 @@ func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 
 	views, err := h.repo.ListFormsByUserId(r.Context(), userID, opts)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to fetch forms")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -128,7 +128,7 @@ func (h *FormsHandler) ListAllForms(w http.ResponseWriter, r *http.Request) {
 
 	views, err := h.repo.ListAllForms(r.Context(), opts)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to fetch forms")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -199,10 +199,10 @@ func (h *FormsHandler) GetShrubForm(w http.ResponseWriter, r *http.Request) {
 	shrubForm, err := h.repo.GetShrubFormById(r.Context(), formID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to fetch form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -222,10 +222,10 @@ func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) 
 	pesticideForm, err := h.repo.GetPesticideFormById(r.Context(), formID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to fetch form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -245,10 +245,10 @@ func (h *FormsHandler) GetFormView(w http.ResponseWriter, r *http.Request) {
 	view, err := h.repo.GetFormViewById(r.Context(), formID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to fetch form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	var req UpdateShrubFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -283,7 +283,7 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 	shrubForm, err := h.repo.UpdateShrubFormById(r.Context(), formID, userID, shrubFormInput)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
 		respondError(w, http.StatusInternalServerError, "Failed to update form")
@@ -306,7 +306,7 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 	// Parse request
 	var req UpdatePesticideFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -320,10 +320,10 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 	pesticideForm, err := h.repo.UpdatePesticideFormById(r.Context(), formID, userID, pesticideFormInput)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to update form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -343,10 +343,10 @@ func (h *FormsHandler) DeleteForm(w http.ResponseWriter, r *http.Request) {
 	err := h.repo.DeleteFormById(r.Context(), formID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondError(w, http.StatusNotFound, "Form not found")
+			respondError(w, http.StatusNotFound, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to delete form")
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
