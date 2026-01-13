@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -116,9 +115,6 @@ func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 		formResponses = append(formResponses, formViewToResponse(view))
 	}
 
-	for _, resp := range formResponses {
-		fmt.Printf("FormViewResponse: %v\n", resp)
-	}
 	respondJSON(w, http.StatusOK, ListFormsResponse{
 		Forms: formResponses,
 		Count: len(formResponses),
