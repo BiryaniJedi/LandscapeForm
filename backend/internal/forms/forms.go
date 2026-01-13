@@ -209,7 +209,7 @@ func (r *FormsRepository) ListFormsByUserId(
 
 	// Build WHERE clause
 	whereConditions := []string{"f.created_by = $1"}
-	args := []interface{}{userID}
+	args := []any{userID}
 	argIndex := 2
 
 	// Add form type filter

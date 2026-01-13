@@ -204,7 +204,7 @@ export class FormsClient extends ApiClient {
      * @throws {AuthError} If the user is not authenticated or not an admin
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async listAllForms(params?: ListFormsParams): Promise<ListFormsResponse> {
+    async listFormsAllUsers(params?: ListFormsParams): Promise<ListFormsResponse> {
         const queryParams = new URLSearchParams()
 
         if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString())

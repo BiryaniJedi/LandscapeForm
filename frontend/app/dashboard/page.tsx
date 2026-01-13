@@ -24,7 +24,7 @@ export default function DashboardPage() {
             }
         }
         fetchFormCounts();
-    })
+    }, [])
 
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -160,7 +160,22 @@ export default function DashboardPage() {
                                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">
                                         {pesticideCount + shrubCount}
                                     </p>
+                                    <button
+                                        onClick={() => router.push('/forms')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        View Your Forms
+                                    </button>
                                 </div>
+                                {(user && user.role === 'admin') && (
+                                    <button
+                                        onClick={() => router.push('/forms/all')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        View Forms from all users
+                                    </button>
+                                )}
+
                             </div>
                         </div>
 

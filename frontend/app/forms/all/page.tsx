@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { ListFormsResponse, FormViewResponse } from '@/lib/api/types';
 
-export default function ListFormsPage() {
+export default function ListFormsAllUsersPage() {
     const router = useRouter();
 
     const [formviewList, setFormviewList] = useState<ListFormsResponse | null>(null);
@@ -15,7 +15,7 @@ export default function ListFormsPage() {
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const data = await formsClient.listFormsByUserId();
+                const data = await formsClient.listFormsAllUsers();
                 setFormviewList(data);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load form');
@@ -44,7 +44,7 @@ export default function ListFormsPage() {
                 <header className="bg-white dark:bg-zinc-900 shadow">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                            Error Loading Form
+                            Error Loading Forms for All users
                         </h1>
                     </div>
                 </header>
@@ -115,6 +115,13 @@ export default function ListFormsPage() {
                                         {formview.form_type == 'shrub' ? 'Number of Shrubs' : 'Name of Pesticide'}
                                     </label>
                                     <p className="text-zinc-900 dark:text-zinc-50">{formview.form_type == 'shrub' ? formview.num_shrubs : formview.pesticide_name}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                        Created By
+                                    </label>
+                                    <p className="text-zinc-900 dark:text-zinc-50">{formview.created_by}</p>
                                 </div>
                             </div>
                         ))}
