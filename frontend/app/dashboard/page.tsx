@@ -4,7 +4,6 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
 import { formsClient } from '@/lib/api/forms';
-import { ListFormsParams, ListFormsResponse } from '@/lib/api/types';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -12,7 +11,6 @@ export default function DashboardPage() {
     const [error, setError] = useState<string | null>(null);
     const [shrubCount, setShrubCount] = useState(0)
     const [pesticideCount, setPesticideCount] = useState(0)
-    const [fetching, setFetching] = useState(true)
 
     useEffect(() => {
         const fetchFormCounts = async () => {
@@ -115,15 +113,6 @@ export default function DashboardPage() {
                                 This is your dashboard. Forms management features coming soon!
                             </p>
 
-                            <div className="mb-6">
-                                <button
-                                    onClick={() => router.push('/forms/shrub')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Create Shrub Form
-                                </button>
-                            </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
                                     <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
@@ -135,6 +124,12 @@ export default function DashboardPage() {
                                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">
                                         {shrubCount}
                                     </p>
+                                    <button
+                                        onClick={() => router.push('/forms/shrub')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Create Shrub Form
+                                    </button>
                                 </div>
 
                                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
@@ -147,6 +142,12 @@ export default function DashboardPage() {
                                     <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
                                         {pesticideCount}
                                     </p>
+                                    <button
+                                        onClick={() => router.push('/forms/pesticide')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Create Pesticide Form
+                                    </button>
                                 </div>
 
                                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
