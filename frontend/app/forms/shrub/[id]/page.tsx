@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
-import { FormViewResponse } from '@/lib/api/types';
+import { ShrubForm } from '@/lib/api/types';
 
 export default function ShrubFormDetailPage() {
     const router = useRouter();
     const params = useParams();
     const formId = params.id as string;
 
-    const [form, setForm] = useState<FormViewResponse | null>(null);
+    const [form, setForm] = useState<ShrubForm | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 

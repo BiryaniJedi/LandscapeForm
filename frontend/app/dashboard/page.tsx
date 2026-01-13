@@ -3,11 +3,30 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
+import { formsClient } from '@/lib/api/forms';
+import { ListFormsParams, ListFormsResponse } from '@/lib/api/types';
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading, logout, } = useAuth();
     const [error, setError] = useState<string | null>(null);
+    const [shrubCount, setShrubCount] = useState(0)
+    const [pesticideCount, setPesticideCount] = useState(0)
+    const [fetching, setFetching] = useState(true)
+
+    useEffect(() => {
+        const fetchFormCounts = async () => {
+            try {
+                const shrubForms = await formsClient.listFormsByUserId({ form_type: 'shrub' })
+                const pesticideForms = await formsClient.listFormsByUserId({ form_type: 'pesticide' })
+                setShrubCount(shrubForms.count)
+                setPesticideCount(pesticideForms.count)
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to fetch form counts');
+            }
+        }
+        fetchFormCounts();
+    })
 
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -114,7 +133,7 @@ export default function DashboardPage() {
                                         Manage shrub landscaping forms
                                     </p>
                                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-                                        0
+                                        {shrubCount}
                                     </p>
                                 </div>
 
@@ -126,7 +145,7 @@ export default function DashboardPage() {
                                         Manage pesticide application forms
                                     </p>
                                     <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
-                                        0
+                                        {pesticideCount}
                                     </p>
                                 </div>
 
@@ -138,7 +157,7 @@ export default function DashboardPage() {
                                         All forms combined
                                     </p>
                                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-                                        0
+                                        {pesticideCount + shrubCount}
                                     </p>
                                 </div>
                             </div>
