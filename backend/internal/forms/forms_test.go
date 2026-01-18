@@ -43,11 +43,18 @@ func TestCreateAndGetShrubForm(t *testing.T) {
 	createdShrubFormId, err := repo.CreateShrubForm(
 		ctx,
 		CreateShrubFormInput{
-			CreatedBy: userID,
-			FirstName: "Alice",
-			LastName:  "Gardener",
-			HomePhone: "555-1234",
-			NumShrubs: 6,
+			CreatedBy:    userID,
+			FirstName:    "Alice",
+			LastName:     "Gardener",
+			StreetNumber: "123",
+			StreetName:   "Main St",
+			Town:         "Springfield",
+			ZipCode:      "12345",
+			HomePhone:    "555-1234",
+			OtherPhone:   "555-5678",
+			CallBefore:   true,
+			IsHoliday:    false,
+			FleaOnly:     true,
 		},
 	)
 	require.NoError(t, err)
@@ -61,41 +68,64 @@ func TestCreateAndGetShrubForm(t *testing.T) {
 
 	require.Equal(t, "Alice", got.FirstName)
 	require.Equal(t, "Gardener", got.LastName)
+	require.Equal(t, "123", got.StreetNumber)
+	require.Equal(t, "Main St", got.StreetName)
+	require.Equal(t, "Springfield", got.Town)
+	require.Equal(t, "12345", got.ZipCode)
 	require.Equal(t, "555-1234", got.HomePhone)
-	require.Equal(t, 6, got.NumShrubs)
+	require.Equal(t, "555-5678", got.OtherPhone)
+	require.Equal(t, true, got.CallBefore)
+	require.Equal(t, false, got.IsHoliday)
+	require.Equal(t, true, got.FleaOnly)
 }
 
-func TestCreateAndGetPesticideForm(t *testing.T) {
+func TestCreateAndGetLawnForm(t *testing.T) {
 	ctx := context.Background()
 	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
 
-	createdPesticideFormId, err := repo.CreatePesticideForm(
+	createdLawnFormId, err := repo.CreateLawnForm(
 		ctx,
-		CreatePesticideFormInput{
-			CreatedBy:     userID,
-			FirstName:     "Bob",
-			LastName:      "Johnson",
-			HomePhone:     "555-5678",
-			PesticideName: "Roundup",
+		CreateLawnFormInput{
+			CreatedBy:    userID,
+			FirstName:    "Bob",
+			LastName:     "Johnson",
+			StreetNumber: "456",
+			StreetName:   "Oak Ave",
+			Town:         "Shelbyville",
+			ZipCode:      "54321",
+			HomePhone:    "555-5678",
+			OtherPhone:   "555-9999",
+			CallBefore:   false,
+			IsHoliday:    true,
+			LawnAreaSqFt: 5000,
+			FertOnly:     false,
 		},
 	)
 	require.NoError(t, err)
 
 	// Validate returned formID
-	require.NotEmpty(t, createdPesticideFormId)
+	require.NotEmpty(t, createdLawnFormId)
 
 	// Fetch from DB
-	got, err := repo.GetFormViewById(ctx, createdPesticideFormId, userID)
+	got, err := repo.GetFormViewById(ctx, createdLawnFormId, userID)
 	require.NoError(t, err)
 
-	require.NotNil(t, got.Pesticide)
-	require.Equal(t, "Bob", got.Pesticide.Form.FirstName)
-	require.Equal(t, "Johnson", got.Pesticide.Form.LastName)
-	require.Equal(t, "555-5678", got.Pesticide.Form.HomePhone)
-	require.Equal(t, "Roundup", got.Pesticide.PesticideDetails.PesticideName)
+	require.NotNil(t, got.Lawn)
+	require.Equal(t, "Bob", got.Lawn.Form.FirstName)
+	require.Equal(t, "Johnson", got.Lawn.Form.LastName)
+	require.Equal(t, "456", got.Lawn.Form.StreetNumber)
+	require.Equal(t, "Oak Ave", got.Lawn.Form.StreetName)
+	require.Equal(t, "Shelbyville", got.Lawn.Form.Town)
+	require.Equal(t, "54321", got.Lawn.Form.ZipCode)
+	require.Equal(t, "555-5678", got.Lawn.Form.HomePhone)
+	require.Equal(t, "555-9999", got.Lawn.Form.OtherPhone)
+	require.Equal(t, false, got.Lawn.Form.CallBefore)
+	require.Equal(t, true, got.Lawn.Form.IsHoliday)
+	require.Equal(t, 5000, got.Lawn.LawnDetails.LawnAreaSqFt)
+	require.Equal(t, false, got.Lawn.LawnDetails.FertOnly)
 }
 
 func TestListFormsByUserId_Empty(t *testing.T) {
@@ -123,31 +153,53 @@ func TestListFormsByUserId_MultipleForms(t *testing.T) {
 
 	// Create shrub form
 	_, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Charlie",
-		LastName:  "Brown",
-		HomePhone: "555-1111",
-		NumShrubs: 3,
+		CreatedBy:    userID,
+		FirstName:    "Charlie",
+		LastName:     "Brown",
+		StreetNumber: "111",
+		StreetName:   "Pine St",
+		Town:         "Town1",
+		ZipCode:      "11111",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
-	// Create pesticide form
-	_, err = repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     userID,
-		FirstName:     "Alice",
-		LastName:      "Anderson",
-		HomePhone:     "555-2222",
-		PesticideName: "Weed-B-Gone",
+	// Create lawn form
+	_, err = repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    userID,
+		FirstName:    "Alice",
+		LastName:     "Anderson",
+		StreetNumber: "222",
+		StreetName:   "Elm St",
+		Town:         "Town2",
+		ZipCode:      "22222",
+		HomePhone:    "555-2222",
+		OtherPhone:   "555-2223",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 3000,
+		FertOnly:     true,
 	})
 	require.NoError(t, err)
 
 	// Create another shrub form
 	_, err = repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Bob",
-		LastName:  "White",
-		HomePhone: "555-3333",
-		NumShrubs: 10,
+		CreatedBy:    userID,
+		FirstName:    "Bob",
+		LastName:     "White",
+		StreetNumber: "333",
+		StreetName:   "Maple St",
+		Town:         "Town3",
+		ZipCode:      "33333",
+		HomePhone:    "555-3333",
+		OtherPhone:   "555-3334",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     true,
 	})
 	require.NoError(t, err)
 
@@ -161,7 +213,7 @@ func TestListFormsByUserId_MultipleForms(t *testing.T) {
 
 	// Check types are correct
 	require.Equal(t, "shrub", forms[0].FormType)
-	require.Equal(t, "pesticide", forms[1].FormType)
+	require.Equal(t, "lawn", forms[1].FormType)
 	require.Equal(t, "shrub", forms[2].FormType)
 }
 
@@ -174,29 +226,51 @@ func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 
 	// Create forms with different first names
 	_, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Zoe",
-		LastName:  "Smith",
-		HomePhone: "555-0001",
-		NumShrubs: 1,
+		CreatedBy:    userID,
+		FirstName:    "Zoe",
+		LastName:     "Smith",
+		StreetNumber: "100",
+		StreetName:   "A St",
+		Town:         "Town",
+		ZipCode:      "10001",
+		HomePhone:    "555-0001",
+		OtherPhone:   "555-0011",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
-	_, err = repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     userID,
-		FirstName:     "Alice",
-		LastName:      "Jones",
-		HomePhone:     "555-0002",
-		PesticideName: "Spray",
+	_, err = repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    userID,
+		FirstName:    "Alice",
+		LastName:     "Jones",
+		StreetNumber: "200",
+		StreetName:   "B St",
+		Town:         "Town",
+		ZipCode:      "10002",
+		HomePhone:    "555-0002",
+		OtherPhone:   "555-0022",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 2000,
+		FertOnly:     false,
 	})
 	require.NoError(t, err)
 
 	_, err = repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Michael",
-		LastName:  "Brown",
-		HomePhone: "555-0003",
-		NumShrubs: 5,
+		CreatedBy:    userID,
+		FirstName:    "Michael",
+		LastName:     "Brown",
+		StreetNumber: "300",
+		StreetName:   "C St",
+		Town:         "Town",
+		ZipCode:      "10003",
+		HomePhone:    "555-0003",
+		OtherPhone:   "555-0033",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     true,
 	})
 	require.NoError(t, err)
 
@@ -215,7 +289,7 @@ func TestListFormsByUserId_SortByFirstName(t *testing.T) {
 		if fv.Shrub != nil {
 			return fv.Shrub.Form.FirstName
 		}
-		return fv.Pesticide.Form.FirstName
+		return fv.Lawn.Form.FirstName
 	}
 
 	require.Equal(t, "Alice", getFirstName(forms[0]))
@@ -240,20 +314,35 @@ func TestListFormsByUserId_SortByLastName(t *testing.T) {
 	userID := createTestUser(t, db)
 
 	_, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "John",
-		LastName:  "Zimmerman",
-		HomePhone: "555-0001",
-		NumShrubs: 1,
+		CreatedBy:    userID,
+		FirstName:    "John",
+		LastName:     "Zimmerman",
+		StreetNumber: "111",
+		StreetName:   "Z St",
+		Town:         "Town",
+		ZipCode:      "20001",
+		HomePhone:    "555-0001",
+		OtherPhone:   "555-0011",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
-	_, err = repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     userID,
-		FirstName:     "Jane",
-		LastName:      "Adams",
-		HomePhone:     "555-0002",
-		PesticideName: "Bug Killer",
+	_, err = repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    userID,
+		FirstName:    "Jane",
+		LastName:     "Adams",
+		StreetNumber: "222",
+		StreetName:   "A St",
+		Town:         "Town",
+		ZipCode:      "20002",
+		HomePhone:    "555-0002",
+		OtherPhone:   "555-0022",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 1500,
+		FertOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -270,7 +359,7 @@ func TestListFormsByUserId_SortByLastName(t *testing.T) {
 		if fv.Shrub != nil {
 			return fv.Shrub.Form.LastName
 		}
-		return fv.Pesticide.Form.LastName
+		return fv.Lawn.Form.LastName
 	}
 
 	require.Equal(t, "Adams", getLastName(forms[0]))
@@ -295,21 +384,36 @@ func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 
 	// User 1 creates a form
 	_, err = repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: user1ID,
-		FirstName: "User1",
-		LastName:  "Form",
-		HomePhone: "555-1111",
-		NumShrubs: 1,
+		CreatedBy:    user1ID,
+		FirstName:    "User1",
+		LastName:     "Form",
+		StreetNumber: "11",
+		StreetName:   "User St",
+		Town:         "Town",
+		ZipCode:      "30001",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
 	// User 2 creates a form
-	_, err = repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     user2ID,
-		FirstName:     "User2",
-		LastName:      "Form",
-		HomePhone:     "555-2222",
-		PesticideName: "Spray",
+	_, err = repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    user2ID,
+		FirstName:    "User2",
+		LastName:     "Form",
+		StreetNumber: "22",
+		StreetName:   "User Ave",
+		Town:         "Town",
+		ZipCode:      "30002",
+		HomePhone:    "555-2222",
+		OtherPhone:   "555-2223",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 4000,
+		FertOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -318,7 +422,7 @@ func TestListFormsByUserId_OnlyOwnForms(t *testing.T) {
 		if fv.Shrub != nil {
 			return fv.Shrub.Form.FirstName
 		}
-		return fv.Pesticide.Form.FirstName
+		return fv.Lawn.Form.FirstName
 	}
 
 	// User 1 should only see their own form
@@ -355,11 +459,18 @@ func TestGetFormById_WrongUser(t *testing.T) {
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
 	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: user1ID,
-		FirstName: "User1",
-		LastName:  "Form",
-		HomePhone: "555-1111",
-		NumShrubs: 5,
+		CreatedBy:    user1ID,
+		FirstName:    "User1",
+		LastName:     "Form",
+		StreetNumber: "100",
+		StreetName:   "Test St",
+		Town:         "TestTown",
+		ZipCode:      "40001",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     true,
 	})
 	require.NoError(t, err)
 
@@ -387,11 +498,18 @@ func TestUpdateShrubFormById(t *testing.T) {
 
 	// Create shrub form
 	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Original",
-		LastName:  "Name",
-		HomePhone: "555-0000",
-		NumShrubs: 5,
+		CreatedBy:    userID,
+		FirstName:    "Original",
+		LastName:     "Name",
+		StreetNumber: "999",
+		StreetName:   "Old St",
+		Town:         "OldTown",
+		ZipCode:      "90001",
+		HomePhone:    "555-0000",
+		OtherPhone:   "555-0001",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -401,58 +519,96 @@ func TestUpdateShrubFormById(t *testing.T) {
 		shrubFormId,
 		userID,
 		UpdateShrubFormInput{
-			FirstName: "Updated",
-			LastName:  "NewName",
-			HomePhone: "555-9999",
-			NumShrubs: 10,
+			FirstName:    "Updated",
+			LastName:     "NewName",
+			StreetNumber: "888",
+			StreetName:   "New Ave",
+			Town:         "NewTown",
+			ZipCode:      "90002",
+			HomePhone:    "555-9999",
+			OtherPhone:   "555-9998",
+			CallBefore:   true,
+			IsHoliday:    true,
+			FleaOnly:     true,
 		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 	require.Equal(t, "Updated", updated.FirstName)
 	require.Equal(t, "NewName", updated.LastName)
+	require.Equal(t, "888", updated.StreetNumber)
+	require.Equal(t, "New Ave", updated.StreetName)
+	require.Equal(t, "NewTown", updated.Town)
+	require.Equal(t, "90002", updated.ZipCode)
 	require.Equal(t, "555-9999", updated.HomePhone)
-	require.Equal(t, 10, updated.NumShrubs)
+	require.Equal(t, "555-9998", updated.OtherPhone)
+	require.Equal(t, true, updated.CallBefore)
+	require.Equal(t, true, updated.IsHoliday)
+	require.Equal(t, true, updated.FleaOnly)
 
 	// Verify updated_at changed
 	require.True(t, updated.UpdatedAt.After(updated.CreatedAt))
 }
 
-func TestUpdatePesticideFormById(t *testing.T) {
+func TestUpdateLawnFormById(t *testing.T) {
 	ctx := context.Background()
 	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	userID := createTestUser(t, db)
 
-	// Create pesticide form
-	pesticideFormId, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     userID,
-		FirstName:     "Jane",
-		LastName:      "Doe",
-		HomePhone:     "555-1111",
-		PesticideName: "OldSpray",
+	// Create lawn form
+	lawnFormId, err := repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    userID,
+		FirstName:    "Jane",
+		LastName:     "Doe",
+		StreetNumber: "500",
+		StreetName:   "Old Lawn St",
+		Town:         "GrassTown",
+		ZipCode:      "70001",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 3000,
+		FertOnly:     false,
 	})
 	require.NoError(t, err)
 
 	// Update the form
-	updated, err := repo.UpdatePesticideFormById(
+	updated, err := repo.UpdateLawnFormById(
 		ctx,
-		pesticideFormId,
+		lawnFormId,
 		userID,
-		UpdatePesticideFormInput{
-			FirstName:     "Janet",
-			LastName:      "Smith",
-			HomePhone:     "555-2222",
-			PesticideName: "NewSpray",
+		UpdateLawnFormInput{
+			FirstName:    "Janet",
+			LastName:     "Smith",
+			StreetNumber: "600",
+			StreetName:   "New Lawn Ave",
+			Town:         "MeadowTown",
+			ZipCode:      "70002",
+			HomePhone:    "555-2222",
+			OtherPhone:   "555-2223",
+			CallBefore:   true,
+			IsHoliday:    false,
+			LawnAreaSqFt: 4500,
+			FertOnly:     true,
 		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 	require.Equal(t, "Janet", updated.FirstName)
 	require.Equal(t, "Smith", updated.LastName)
+	require.Equal(t, "600", updated.StreetNumber)
+	require.Equal(t, "New Lawn Ave", updated.StreetName)
+	require.Equal(t, "MeadowTown", updated.Town)
+	require.Equal(t, "70002", updated.ZipCode)
 	require.Equal(t, "555-2222", updated.HomePhone)
-	require.Equal(t, "NewSpray", updated.PesticideName)
+	require.Equal(t, "555-2223", updated.OtherPhone)
+	require.Equal(t, true, updated.CallBefore)
+	require.Equal(t, false, updated.IsHoliday)
+	require.Equal(t, 4500, updated.LawnAreaSqFt)
+	require.Equal(t, true, updated.FertOnly)
 }
 
 func TestUpdateShrubFormById_WrongUser(t *testing.T) {
@@ -463,11 +619,18 @@ func TestUpdateShrubFormById_WrongUser(t *testing.T) {
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
 	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: user1ID,
-		FirstName: "User1",
-		LastName:  "Form",
-		HomePhone: "555-1111",
-		NumShrubs: 5,
+		CreatedBy:    user1ID,
+		FirstName:    "User1",
+		LastName:     "Form",
+		StreetNumber: "111",
+		StreetName:   "User St",
+		Town:         "UserTown",
+		ZipCode:      "80001",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -486,29 +649,44 @@ func TestUpdateShrubFormById_WrongUser(t *testing.T) {
 		shrubFormId,
 		user2ID,
 		UpdateShrubFormInput{
-			FirstName: "Hacked",
-			LastName:  "Name",
-			HomePhone: "555-9999",
-			NumShrubs: 100,
+			FirstName:    "Hacked",
+			LastName:     "Name",
+			StreetNumber: "999",
+			StreetName:   "Hack St",
+			Town:         "HackTown",
+			ZipCode:      "99999",
+			HomePhone:    "555-9999",
+			OtherPhone:   "555-9998",
+			CallBefore:   true,
+			IsHoliday:    true,
+			FleaOnly:     true,
 		},
 	)
 	require.Error(t, err)
 	require.Equal(t, sql.ErrNoRows, err)
 }
 
-func TestUpdatePesticideFormById_WrongUser(t *testing.T) {
+func TestUpdateLawnFormById_WrongUser(t *testing.T) {
 	ctx := context.Background()
 	db := db.TestDB(t)
 	repo := NewFormsRepository(db)
 
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
-	pesticideFormId, err := repo.CreatePesticideForm(ctx, CreatePesticideFormInput{
-		CreatedBy:     user1ID,
-		FirstName:     "User1",
-		LastName:      "Form",
-		HomePhone:     "555-1111",
-		PesticideName: "genPest",
+	lawnFormId, err := repo.CreateLawnForm(ctx, CreateLawnFormInput{
+		CreatedBy:    user1ID,
+		FirstName:    "User1",
+		LastName:     "Form",
+		StreetNumber: "222",
+		StreetName:   "Lawn St",
+		Town:         "LawnTown",
+		ZipCode:      "80002",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		LawnAreaSqFt: 2500,
+		FertOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -522,15 +700,23 @@ func TestUpdatePesticideFormById_WrongUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// User 2 tries to update User 1's form
-	_, err = repo.UpdatePesticideFormById(
+	_, err = repo.UpdateLawnFormById(
 		ctx,
-		pesticideFormId,
+		lawnFormId,
 		user2ID,
-		UpdatePesticideFormInput{
-			FirstName:     "Hacked",
-			LastName:      "Name",
-			HomePhone:     "555-9999",
-			PesticideName: "genPest2",
+		UpdateLawnFormInput{
+			FirstName:    "Hacked",
+			LastName:     "Name",
+			StreetNumber: "888",
+			StreetName:   "Hack Ave",
+			Town:         "HackCity",
+			ZipCode:      "88888",
+			HomePhone:    "555-9999",
+			OtherPhone:   "555-9998",
+			CallBefore:   true,
+			IsHoliday:    true,
+			LawnAreaSqFt: 9999,
+			FertOnly:     true,
 		},
 	)
 	require.Error(t, err)
@@ -546,11 +732,18 @@ func TestDeleteFormById_Success(t *testing.T) {
 
 	// Create form
 	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: "Delete",
-		LastName:  "Me",
-		HomePhone: "555-0000",
-		NumShrubs: 1,
+		CreatedBy:    userID,
+		FirstName:    "Delete",
+		LastName:     "Me",
+		StreetNumber: "999",
+		StreetName:   "Delete St",
+		Town:         "DeleteTown",
+		ZipCode:      "99999",
+		HomePhone:    "555-0000",
+		OtherPhone:   "555-0001",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     false,
 	})
 	require.NoError(t, err)
 
@@ -565,7 +758,7 @@ func TestDeleteFormById_Success(t *testing.T) {
 
 	// Verify shrub details also deleted (cascade)
 	var count int
-	err = db.QueryRow(`SELECT COUNT(*) FROM shrubs WHERE form_id = $1`, shrubFormId).Scan(&count)
+	err = db.QueryRow(`SELECT COUNT(*) FROM shrub_forms WHERE form_id = $1`, shrubFormId).Scan(&count)
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
 }
@@ -578,11 +771,18 @@ func TestDeleteFormById_WrongUser(t *testing.T) {
 	// Create user 1 and their form
 	user1ID := createTestUser(t, db)
 	shrubFormId, err := repo.CreateShrubForm(ctx, CreateShrubFormInput{
-		CreatedBy: user1ID,
-		FirstName: "User1",
-		LastName:  "Form",
-		HomePhone: "555-1111",
-		NumShrubs: 5,
+		CreatedBy:    user1ID,
+		FirstName:    "User1",
+		LastName:     "Form",
+		StreetNumber: "777",
+		StreetName:   "Persist St",
+		Town:         "SafeTown",
+		ZipCode:      "77777",
+		HomePhone:    "555-1111",
+		OtherPhone:   "555-1112",
+		CallBefore:   false,
+		IsHoliday:    false,
+		FleaOnly:     true,
 	})
 	require.NoError(t, err)
 

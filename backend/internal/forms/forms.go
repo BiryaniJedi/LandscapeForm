@@ -24,32 +24,62 @@ func NewFormsRepository(database *sql.DB) *FormsRepository {
 
 // CreateFormInput contains the common fields required to create a new form.
 type CreateShrubFormInput struct {
-	CreatedBy string
-	FirstName string
-	LastName  string
-	HomePhone string
-	NumShrubs int
+	CreatedBy    string
+	FirstName    string
+	LastName     string
+	StreetNumber string
+	StreetName   string
+	Town         string
+	ZipCode      string
+	HomePhone    string
+	OtherPhone   string
+	CallBefore   bool
+	IsHoliday    bool
+	FleaOnly     bool
 }
-type CreatePesticideFormInput struct {
-	CreatedBy     string
-	FirstName     string
-	LastName      string
-	HomePhone     string
-	PesticideName string
+type CreateLawnFormInput struct {
+	CreatedBy    string
+	FirstName    string
+	LastName     string
+	StreetNumber string
+	StreetName   string
+	Town         string
+	ZipCode      string
+	HomePhone    string
+	OtherPhone   string
+	CallBefore   bool
+	IsHoliday    bool
+	LawnAreaSqFt int
+	FertOnly     bool
 }
 
 // UpdateFormInput contains the fields that may be updated on an existing form.
 type UpdateShrubFormInput struct {
-	FirstName string
-	LastName  string
-	HomePhone string
-	NumShrubs int
+	FirstName    string
+	LastName     string
+	StreetNumber string
+	StreetName   string
+	Town         string
+	ZipCode      string
+	HomePhone    string
+	OtherPhone   string
+	CallBefore   bool
+	IsHoliday    bool
+	FleaOnly     bool
 }
-type UpdatePesticideFormInput struct {
-	FirstName     string
-	LastName      string
-	HomePhone     string
-	PesticideName string
+type UpdateLawnFormInput struct {
+	FirstName    string
+	LastName     string
+	StreetNumber string
+	StreetName   string
+	Town         string
+	ZipCode      string
+	HomePhone    string
+	OtherPhone   string
+	CallBefore   bool
+	IsHoliday    bool
+	LawnAreaSqFt int
+	FertOnly     bool
 }
 
 // CreateShrubForm creates a new shrub form and its associated shrub details.
@@ -72,15 +102,29 @@ func (r *FormsRepository) CreateShrubForm(
 			form_type,
 			first_name,
 			last_name,
-			home_phone
+			street_number,
+			street_name,
+			town,
+			zip_code,
+			home_phone,
+			other_phone,
+			call_before,
+			is_holiday
 		)
-		VALUES ($1, 'shrub', $2, $3, $4)
+		VALUES ($1, 'shrub', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id
 	`,
 		shrubFormInput.CreatedBy,
 		shrubFormInput.FirstName,
 		shrubFormInput.LastName,
+		shrubFormInput.StreetNumber,
+		shrubFormInput.StreetName,
+		shrubFormInput.Town,
+		shrubFormInput.ZipCode,
 		shrubFormInput.HomePhone,
+		shrubFormInput.OtherPhone,
+		shrubFormInput.CallBefore,
+		shrubFormInput.IsHoliday,
 	).Scan(
 		&formID,
 	)
@@ -89,14 +133,14 @@ func (r *FormsRepository) CreateShrubForm(
 	}
 
 	_, err = tx.ExecContext(ctx, `
-		INSERT INTO shrubs (
+		INSERT INTO shrub_forms (
 			form_id,
-			num_shrubs
+			flea_only
 		)
 		VALUES ($1, $2)
 	`,
 		formID,
-		shrubFormInput.NumShrubs,
+		shrubFormInput.FleaOnly,
 	)
 	if err != nil {
 		return "", fmt.Errorf("Failed to insert shrub form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
@@ -109,12 +153,12 @@ func (r *FormsRepository) CreateShrubForm(
 	return formID, nil
 }
 
-// CreatePesticideForm creates a new pesticide form and its associated pesticide details.
+// CreateLawnForm creates a new lawn form and its associated lawn details.
 // Returns the created form's ID upon success
-// The operation is atomic and will fail if pesticide details are not provided.
-func (r *FormsRepository) CreatePesticideForm(
+// The operation is atomic and will fail if lawn details are not provided.
+func (r *FormsRepository) CreateLawnForm(
 	ctx context.Context,
-	pesticideFormInput CreatePesticideFormInput,
+	lawnFormInput CreateLawnFormInput,
 ) (string, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -129,39 +173,55 @@ func (r *FormsRepository) CreatePesticideForm(
 			form_type,
 			first_name,
 			last_name,
-			home_phone
+			street_number,
+			street_name,
+			town,
+			zip_code,
+			home_phone,
+			other_phone,
+			call_before,
+			is_holiday
 		)
-		VALUES ($1, 'pesticide', $2, $3, $4)
+		VALUES ($1, 'lawn', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id
 	`,
-		pesticideFormInput.CreatedBy,
-		pesticideFormInput.FirstName,
-		pesticideFormInput.LastName,
-		pesticideFormInput.HomePhone,
+		lawnFormInput.CreatedBy,
+		lawnFormInput.FirstName,
+		lawnFormInput.LastName,
+		lawnFormInput.StreetNumber,
+		lawnFormInput.StreetName,
+		lawnFormInput.Town,
+		lawnFormInput.ZipCode,
+		lawnFormInput.HomePhone,
+		lawnFormInput.OtherPhone,
+		lawnFormInput.CallBefore,
+		lawnFormInput.IsHoliday,
 	).Scan(
 		&formID,
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("Failed to insert form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
+		return "", fmt.Errorf("Failed to insert form: %s %s, %w", lawnFormInput.FirstName, lawnFormInput.LastName, err)
 	}
 
 	_, err = tx.ExecContext(ctx, `
-		INSERT INTO pesticides (
+		INSERT INTO lawn_forms (
 			form_id,
-			pesticide_name	
+			lawn_area_sq_ft,
+			fert_only
 		)
-		VALUES ($1, $2)
+		VALUES ($1, $2, $3)
 	`,
 		formID,
-		pesticideFormInput.PesticideName,
+		lawnFormInput.LawnAreaSqFt,
+		lawnFormInput.FertOnly,
 	)
 	if err != nil {
-		return "", fmt.Errorf("Failed to insert pesticide form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
+		return "", fmt.Errorf("Failed to insert lawn form: %s %s, %w", lawnFormInput.FirstName, lawnFormInput.LastName, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return "", fmt.Errorf("Failed to commit transaction for inserting pesticide form: %s %s, %w", pesticideFormInput.FirstName, pesticideFormInput.LastName, err)
+		return "", fmt.Errorf("Failed to commit transaction for inserting lawn form: %s %s, %w", lawnFormInput.FirstName, lawnFormInput.LastName, err)
 	}
 
 	return formID, nil
@@ -238,12 +298,20 @@ func (r *FormsRepository) ListFormsByUserId(
 			f.updated_at,
 			f.first_name,
 			f.last_name,
+			f.street_number,
+			f.street_name,
+			f.town,
+			f.zip_code,
 			f.home_phone,
-			s.num_shrubs,
-			p.pesticide_name
+			f.other_phone,
+			f.call_before,
+			f.is_holiday,
+			sf.flea_only,
+			lf.lawn_area_sq_ft,
+			lf.fert_only
 		FROM forms f
-		LEFT JOIN shrubs s ON f.id = s.form_id
-		LEFT JOIN pesticides p ON f.id = p.form_id
+		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
+		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
 		WHERE %s
 		ORDER BY %s %s
 	`, whereClause, sortColumn, order)
@@ -268,9 +336,9 @@ func (r *FormsRepository) ListFormsByUserId(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form      Form
-			shrub     shrubRow
-			pesticide pesticideRow
+			form Form
+			shrub shrubRow
+			lawn  lawnRow
 		)
 
 		err := rows.Scan(
@@ -281,9 +349,17 @@ func (r *FormsRepository) ListFormsByUserId(
 			&form.UpdatedAt,
 			&form.FirstName,
 			&form.LastName,
+			&form.StreetNumber,
+			&form.StreetName,
+			&form.Town,
+			&form.ZipCode,
 			&form.HomePhone,
-			&shrub.NumShrubs,
-			&pesticide.PesticideName,
+			&form.OtherPhone,
+			&form.CallBefore,
+			&form.IsHoliday,
+			&shrub.FleaOnly,
+			&lawn.LawnAreaSqFt,
+			&lawn.FertOnly,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
@@ -303,15 +379,15 @@ func (r *FormsRepository) ListFormsByUserId(
 				},
 			)
 
-		case "pesticide":
-			pesticideDetails, err := pesticide.ToDomain()
+		case "lawn":
+			lawnDetails, err := lawn.ToDomain()
 			if err != nil {
-				return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
+				return nil, fmt.Errorf("error casting row to lawn form: %w", err)
 			}
-			view = NewPesticideFormView(
-				PesticideForm{
-					Form:             form,
-					PesticideDetails: pesticideDetails,
+			view = NewLawnFormView(
+				LawnForm{
+					Form:        form,
+					LawnDetails: lawnDetails,
 				},
 			)
 		default:
@@ -385,12 +461,20 @@ func (r *FormsRepository) ListAllForms(
 			f.updated_at,
 			f.first_name,
 			f.last_name,
+			f.street_number,
+			f.street_name,
+			f.town,
+			f.zip_code,
 			f.home_phone,
-			s.num_shrubs,
-			p.pesticide_name
+			f.other_phone,
+			f.call_before,
+			f.is_holiday,
+			sf.flea_only,
+			lf.lawn_area_sq_ft,
+			lf.fert_only
 		FROM forms f
-		LEFT JOIN shrubs s ON f.id = s.form_id
-		LEFT JOIN pesticides p ON f.id = p.form_id
+		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
+		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
 		%s
 		ORDER BY %s %s
 	`, whereClause, sortColumn, order)
@@ -415,9 +499,9 @@ func (r *FormsRepository) ListAllForms(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form      Form
-			shrub     shrubRow
-			pesticide pesticideRow
+			form Form
+			shrub shrubRow
+			lawn  lawnRow
 		)
 
 		err := rows.Scan(
@@ -428,9 +512,17 @@ func (r *FormsRepository) ListAllForms(
 			&form.UpdatedAt,
 			&form.FirstName,
 			&form.LastName,
+			&form.StreetNumber,
+			&form.StreetName,
+			&form.Town,
+			&form.ZipCode,
 			&form.HomePhone,
-			&shrub.NumShrubs,
-			&pesticide.PesticideName,
+			&form.OtherPhone,
+			&form.CallBefore,
+			&form.IsHoliday,
+			&shrub.FleaOnly,
+			&lawn.LawnAreaSqFt,
+			&lawn.FertOnly,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
@@ -450,15 +542,15 @@ func (r *FormsRepository) ListAllForms(
 				},
 			)
 
-		case "pesticide":
-			pesticideDetails, err := pesticide.ToDomain()
+		case "lawn":
+			lawnDetails, err := lawn.ToDomain()
 			if err != nil {
-				return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
+				return nil, fmt.Errorf("error casting row to lawn form: %w", err)
 			}
-			view = NewPesticideFormView(
-				PesticideForm{
-					Form:             form,
-					PesticideDetails: pesticideDetails,
+			view = NewLawnFormView(
+				LawnForm{
+					Form:        form,
+					LawnDetails: lawnDetails,
 				},
 			)
 		default:
@@ -491,20 +583,28 @@ func (r *FormsRepository) GetFormViewById(
 			f.updated_at,
 			f.first_name,
 			f.last_name,
+			f.street_number,
+			f.street_name,
+			f.town,
+			f.zip_code,
 			f.home_phone,
-			s.num_shrubs,
-			p.pesticide_name
+			f.other_phone,
+			f.call_before,
+			f.is_holiday,
+			sf.flea_only,
+			lf.lawn_area_sq_ft,
+			lf.fert_only
 		FROM forms f
-		LEFT JOIN shrubs s ON f.id = s.form_id
-		LEFT JOIN pesticides p ON f.id = p.form_id
+		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
+		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
 
 	var (
-		form      Form
-		shrub     shrubRow
-		pesticide pesticideRow
+		form Form
+		shrub shrubRow
+		lawn  lawnRow
 	)
 
 	err := r.db.QueryRowContext(ctx, query, formID, userID).Scan(
@@ -515,9 +615,17 @@ func (r *FormsRepository) GetFormViewById(
 		&form.UpdatedAt,
 		&form.FirstName,
 		&form.LastName,
+		&form.StreetNumber,
+		&form.StreetName,
+		&form.Town,
+		&form.ZipCode,
 		&form.HomePhone,
-		&shrub.NumShrubs,
-		&pesticide.PesticideName,
+		&form.OtherPhone,
+		&form.CallBefore,
+		&form.IsHoliday,
+		&shrub.FleaOnly,
+		&lawn.LawnAreaSqFt,
+		&lawn.FertOnly,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
@@ -538,15 +646,15 @@ func (r *FormsRepository) GetFormViewById(
 			},
 		)
 
-	case "pesticide":
-		pesticideDetails, err := pesticide.ToDomain()
+	case "lawn":
+		lawnDetails, err := lawn.ToDomain()
 		if err != nil {
-			return nil, fmt.Errorf("error casting row to pesticide form: %w", err)
+			return nil, fmt.Errorf("error casting row to lawn form: %w", err)
 		}
-		view = NewPesticideFormView(
-			PesticideForm{
-				Form:             form,
-				PesticideDetails: pesticideDetails,
+		view = NewLawnFormView(
+			LawnForm{
+				Form:        form,
+				LawnDetails: lawnDetails,
 			},
 		)
 	default:
@@ -573,10 +681,17 @@ func (r *FormsRepository) GetShrubFormById(
 			f.updated_at,
 			f.first_name,
 			f.last_name,
+			f.street_number,
+			f.street_name,
+			f.town,
+			f.zip_code,
 			f.home_phone,
-			s.num_shrubs
+			f.other_phone,
+			f.call_before,
+			f.is_holiday,
+			sf.flea_only
 		FROM forms f
-		LEFT JOIN shrubs s ON f.id = s.form_id
+		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
@@ -591,8 +706,15 @@ func (r *FormsRepository) GetShrubFormById(
 		&shrubForm.UpdatedAt,
 		&shrubForm.FirstName,
 		&shrubForm.LastName,
+		&shrubForm.StreetNumber,
+		&shrubForm.StreetName,
+		&shrubForm.Town,
+		&shrubForm.ZipCode,
 		&shrubForm.HomePhone,
-		&shrubForm.NumShrubs,
+		&shrubForm.OtherPhone,
+		&shrubForm.CallBefore,
+		&shrubForm.IsHoliday,
+		&shrubForm.FleaOnly,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
@@ -602,13 +724,13 @@ func (r *FormsRepository) GetShrubFormById(
 	return shrubForm, nil
 }
 
-// GetPesticideFormById returns a single pesticide form owned by the given user.
+// GetLawnFormById returns a single lawn form owned by the given user.
 // It returns sql.ErrNoRows if the form does not exist or is not owned by the user.
-func (r *FormsRepository) GetPesticideFormById(
+func (r *FormsRepository) GetLawnFormById(
 	ctx context.Context,
 	formID string,
 	userID string,
-) (PesticideForm, error) {
+) (LawnForm, error) {
 
 	query := `
 		SELECT
@@ -619,33 +741,49 @@ func (r *FormsRepository) GetPesticideFormById(
 			f.updated_at,
 			f.first_name,
 			f.last_name,
+			f.street_number,
+			f.street_name,
+			f.town,
+			f.zip_code,
 			f.home_phone,
-			p.pesticide_name
+			f.other_phone,
+			f.call_before,
+			f.is_holiday,
+			lf.lawn_area_sq_ft,
+			lf.fert_only
 		FROM forms f
-		LEFT JOIN pesticides p ON f.id = p.form_id
+		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
 
-	var pesticideForm PesticideForm
+	var lawnForm LawnForm
 
 	err := r.db.QueryRowContext(ctx, query, formID, userID).Scan(
-		&pesticideForm.ID,
-		&pesticideForm.CreatedBy,
-		&pesticideForm.CreatedAt,
-		&pesticideForm.FormType,
-		&pesticideForm.UpdatedAt,
-		&pesticideForm.FirstName,
-		&pesticideForm.LastName,
-		&pesticideForm.HomePhone,
-		&pesticideForm.PesticideName,
+		&lawnForm.ID,
+		&lawnForm.CreatedBy,
+		&lawnForm.CreatedAt,
+		&lawnForm.FormType,
+		&lawnForm.UpdatedAt,
+		&lawnForm.FirstName,
+		&lawnForm.LastName,
+		&lawnForm.StreetNumber,
+		&lawnForm.StreetName,
+		&lawnForm.Town,
+		&lawnForm.ZipCode,
+		&lawnForm.HomePhone,
+		&lawnForm.OtherPhone,
+		&lawnForm.CallBefore,
+		&lawnForm.IsHoliday,
+		&lawnForm.LawnAreaSqFt,
+		&lawnForm.FertOnly,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
-		return PesticideForm{}, err
+		return LawnForm{}, err
 	}
 
-	return pesticideForm, nil
+	return lawnForm, nil
 }
 
 // UpdateShrubFormById updates a shrub form
@@ -668,21 +806,42 @@ func (r *FormsRepository) UpdateShrubFormById(
 		UPDATE forms
 		SET first_name = $1,
 			last_name = $2,
-			home_phone = $3
-		WHERE id = $4 AND created_by = $5
-		RETURNING 
-			id, 
-			created_by, 
+			street_number = $3,
+			street_name = $4,
+			town = $5,
+			zip_code = $6,
+			home_phone = $7,
+			other_phone = $8,
+			call_before = $9,
+			is_holiday = $10
+		WHERE id = $11 AND created_by = $12
+		RETURNING
+			id,
+			created_by,
 			created_at,
 			form_type,
-			updated_at, 
-			first_name, 
-			last_name, 
-			home_phone
+			updated_at,
+			first_name,
+			last_name,
+			street_number,
+			street_name,
+			town,
+			zip_code,
+			home_phone,
+			other_phone,
+			call_before,
+			is_holiday
 	`,
 		shrubFormInput.FirstName,
 		shrubFormInput.LastName,
+		shrubFormInput.StreetNumber,
+		shrubFormInput.StreetName,
+		shrubFormInput.Town,
+		shrubFormInput.ZipCode,
 		shrubFormInput.HomePhone,
+		shrubFormInput.OtherPhone,
+		shrubFormInput.CallBefore,
+		shrubFormInput.IsHoliday,
 		formID,
 		userID,
 	).Scan(
@@ -693,7 +852,14 @@ func (r *FormsRepository) UpdateShrubFormById(
 		&shrubForm.UpdatedAt,
 		&shrubForm.FirstName,
 		&shrubForm.LastName,
+		&shrubForm.StreetNumber,
+		&shrubForm.StreetName,
+		&shrubForm.Town,
+		&shrubForm.ZipCode,
 		&shrubForm.HomePhone,
+		&shrubForm.OtherPhone,
+		&shrubForm.CallBefore,
+		&shrubForm.IsHoliday,
 	)
 	if err != nil {
 		//sql.ErrNoRows
@@ -702,13 +868,13 @@ func (r *FormsRepository) UpdateShrubFormById(
 
 	var query string
 	query = `
-		UPDATE shrubs
-		SET num_shrubs = $1
+		UPDATE shrub_forms
+		SET flea_only = $1
 		WHERE form_id = $2
-		RETURNING num_shrubs
+		RETURNING flea_only
 	`
-	err = tx.QueryRowContext(ctx, query, shrubFormInput.NumShrubs, formID).Scan(
-		&shrubForm.NumShrubs,
+	err = tx.QueryRowContext(ctx, query, shrubFormInput.FleaOnly, formID).Scan(
+		&shrubForm.FleaOnly,
 	)
 	if err != nil {
 		//sql.ErrNoRows
@@ -722,78 +888,108 @@ func (r *FormsRepository) UpdateShrubFormById(
 	return shrubForm, nil
 }
 
-// UpdatePesticideFormById updates a pesticide form
+// UpdateLawnFormById updates a lawn form
 // It returns sql.ErrNoRows if the form does not exist or is not owned by the user.
-func (r *FormsRepository) UpdatePesticideFormById(
+func (r *FormsRepository) UpdateLawnFormById(
 	ctx context.Context,
 	formID string,
 	userID string,
-	pesticideFormInput UpdatePesticideFormInput,
-) (PesticideForm, error) {
+	lawnFormInput UpdateLawnFormInput,
+) (LawnForm, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return PesticideForm{}, fmt.Errorf("error starting transaction: %w", err)
+		return LawnForm{}, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	var pesticideForm PesticideForm
+	var lawnForm LawnForm
 
 	err = tx.QueryRowContext(ctx, `
 		UPDATE forms
 		SET first_name = $1,
 			last_name = $2,
-			home_phone = $3
-		WHERE id = $4 AND created_by = $5
-		RETURNING 
-			id, 
-			created_by, 
+			street_number = $3,
+			street_name = $4,
+			town = $5,
+			zip_code = $6,
+			home_phone = $7,
+			other_phone = $8,
+			call_before = $9,
+			is_holiday = $10
+		WHERE id = $11 AND created_by = $12
+		RETURNING
+			id,
+			created_by,
 			created_at,
 			form_type,
-			updated_at, 
-			first_name, 
-			last_name, 
-			home_phone
+			updated_at,
+			first_name,
+			last_name,
+			street_number,
+			street_name,
+			town,
+			zip_code,
+			home_phone,
+			other_phone,
+			call_before,
+			is_holiday
 	`,
-		pesticideFormInput.FirstName,
-		pesticideFormInput.LastName,
-		pesticideFormInput.HomePhone,
+		lawnFormInput.FirstName,
+		lawnFormInput.LastName,
+		lawnFormInput.StreetNumber,
+		lawnFormInput.StreetName,
+		lawnFormInput.Town,
+		lawnFormInput.ZipCode,
+		lawnFormInput.HomePhone,
+		lawnFormInput.OtherPhone,
+		lawnFormInput.CallBefore,
+		lawnFormInput.IsHoliday,
 		formID,
 		userID,
 	).Scan(
-		&pesticideForm.ID,
-		&pesticideForm.CreatedBy,
-		&pesticideForm.CreatedAt,
-		&pesticideForm.FormType,
-		&pesticideForm.UpdatedAt,
-		&pesticideForm.FirstName,
-		&pesticideForm.LastName,
-		&pesticideForm.HomePhone,
+		&lawnForm.ID,
+		&lawnForm.CreatedBy,
+		&lawnForm.CreatedAt,
+		&lawnForm.FormType,
+		&lawnForm.UpdatedAt,
+		&lawnForm.FirstName,
+		&lawnForm.LastName,
+		&lawnForm.StreetNumber,
+		&lawnForm.StreetName,
+		&lawnForm.Town,
+		&lawnForm.ZipCode,
+		&lawnForm.HomePhone,
+		&lawnForm.OtherPhone,
+		&lawnForm.CallBefore,
+		&lawnForm.IsHoliday,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return PesticideForm{}, err
+		return LawnForm{}, err
 	}
 
 	var query string
 	query = `
-		UPDATE pesticides
-		SET pesticide_name = $1
-		WHERE form_id = $2
-		RETURNING pesticide_name
+		UPDATE lawn_forms
+		SET lawn_area_sq_ft = $1,
+			fert_only = $2
+		WHERE form_id = $3
+		RETURNING lawn_area_sq_ft, fert_only
 	`
-	err = tx.QueryRowContext(ctx, query, pesticideFormInput.PesticideName, formID).Scan(
-		&pesticideForm.PesticideName,
+	err = tx.QueryRowContext(ctx, query, lawnFormInput.LawnAreaSqFt, lawnFormInput.FertOnly, formID).Scan(
+		&lawnForm.LawnAreaSqFt,
+		&lawnForm.FertOnly,
 	)
 	if err != nil {
 		//sql.ErrNoRows
-		return PesticideForm{}, err
+		return LawnForm{}, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return PesticideForm{}, fmt.Errorf("error committing transaction: %w", err)
+		return LawnForm{}, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return pesticideForm, nil
+	return lawnForm, nil
 }
 
 // DeleteFormById deletes a form owned by the given user.

@@ -46,7 +46,7 @@ func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
 	}
 }
 
-func pesticideFormToResponse(pesticideForm forms.PesticideForm) PesticideFormResponse {
+func pesticideFormToResponse(pesticideForm forms.LawnForm) PesticideFormResponse {
 	return PesticideFormResponse{
 		ID:            pesticideForm.ID,
 		CreatedBy:     pesticideForm.CreatedBy,
@@ -76,15 +76,15 @@ func formViewToResponse(view *forms.FormView) FormViewResponse {
 		resp.NumShrubs = &view.Shrub.NumShrubs
 	}
 
-	if view.Pesticide != nil {
-		resp.ID = view.Pesticide.Form.ID
-		resp.CreatedBy = view.Pesticide.Form.CreatedBy
-		resp.CreatedAt = view.Pesticide.Form.CreatedAt
-		resp.UpdatedAt = view.Pesticide.Form.UpdatedAt
-		resp.FirstName = view.Pesticide.Form.FirstName
-		resp.LastName = view.Pesticide.Form.LastName
-		resp.HomePhone = view.Pesticide.Form.HomePhone
-		resp.PesticideName = &view.Pesticide.PesticideName
+	if view.Lawn != nil {
+		resp.ID = view.Lawn.Form.ID
+		resp.CreatedBy = view.Lawn.Form.CreatedBy
+		resp.CreatedAt = view.Lawn.Form.CreatedAt
+		resp.UpdatedAt = view.Lawn.Form.UpdatedAt
+		resp.FirstName = view.Lawn.Form.FirstName
+		resp.LastName = view.Lawn.Form.LastName
+		resp.HomePhone = view.Lawn.Form.HomePhone
+		resp.PesticideName = &view.Lawn.PesticideName
 	}
 
 	return resp

@@ -1,5 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
+--
 -- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,8 +34,7 @@ CREATE TABLE forms (
 
     -- General form info
     call_before BOOLEAN NOT NULL DEFAULT FALSE,
-    is_holiday BOOLEAN NOT NULL DEFAULT FALSE,
-    num_pest_applications INT NOT NULL DEFAULT 0
+    is_holiday BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- chemical list for forms
@@ -50,7 +49,7 @@ CREATE TABLE chemicals (
 );
 
 CREATE TABLE pesticide_applications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SMALLSERIAL PRIMARY KEY,
     form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
     chem_used SMALLINT NOT NULL REFERENCES chemicals(id),
     app_timestamp TIMESTAMPTZ NOT NULL,
@@ -80,13 +79,15 @@ CREATE TABLE lawn_forms (
 
 -- Notes for each form (optional)
 CREATE TABLE notes (
-    id SMALLSERIAL PRIMARY KEY,
+    id SMALLSERIAL,
     form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
-    note VARCHAR(25) NOT NULL
+    note TEXT NOT NULL,
+    PRIMARY KEY (id, form_id)
 );
 
 
 -- Indices
+-- Forms
 CREATE INDEX idx_forms_user_created_at ON forms(created_by, created_at DESC);
 CREATE INDEX idx_forms_name_lower ON forms (LOWER(first_name), LOWER(last_name));
 CREATE INDEX idx_forms_name ON forms(first_name, last_name);
@@ -97,6 +98,10 @@ CREATE INDEX idx_forms_town_lower ON forms(LOWER(town));
 CREATE INDEX idx_forms_street_number ON forms(street_number);
 CREATE INDEX idx_forms_zip_code ON forms(zip_code);
 CREATE INDEX idx_forms_home_phone ON forms(home_phone);
+-- Chemicals
+CREATE INDEX idx_chemicals_id ON chemicals(id);
+-- Pesticide pesticide_applications
+CREATE INDEX idx_pesticide_applications_app_timestamp ON pesticide_applications(app_timestamp);
 
 -- Triggers
 CREATE OR REPLACE FUNCTION set_updated_at()

@@ -3,6 +3,7 @@ package forms
 import (
 	"database/sql"
 	"errors"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -13,9 +14,37 @@ type Form struct {
 	FormType  string
 	UpdatedAt time.Time
 
-	FirstName string
-	LastName  string
-	HomePhone string
+	FirstName    string
+	LastName     string
+	StreetNumber string
+	StreetName   string
+	Town         string
+	ZipCode      string
+	HomePhone    string
+	OtherPhone   string
+	CallBefore   bool
+	IsHoliday    bool
+	AppTimes     []PestApp
+	Notes        []Note
+}
+
+type PestApp struct {
+	ID            int
+	ChemUsed      int
+	AppTimestamp  time.Time
+	Rate          string
+	AmountApplied decimal.Decimal
+	LocationCode  LocationCode
+}
+
+type LocationCode struct {
+	x int
+	y int
+}
+
+type Note struct {
+	ID      int
+	Message string
 }
 
 type ShrubForm struct {
@@ -23,49 +52,52 @@ type ShrubForm struct {
 	ShrubDetails
 }
 
-type PesticideForm struct {
+type LawnForm struct {
 	Form
-	PesticideDetails
+	LawnDetails
 }
 
 type ShrubDetails struct {
-	NumShrubs int
+	FleaOnly bool
 }
 
-type PesticideDetails struct {
-	PesticideName string
+type LawnDetails struct {
+	LawnAreaSqFt int
+	FertOnly     bool
 }
 
 type shrubRow struct {
-	NumShrubs sql.NullInt32
+	FleaOnly sql.NullBool
 }
 
-type pesticideRow struct {
-	PesticideName sql.NullString
+type lawnRow struct {
+	LawnAreaSqFt sql.NullInt32
+	FertOnly     sql.NullBool
 }
 
 // Used to store forms in a common slice
 type FormView struct {
-	FormType  string
-	Shrub     *ShrubForm
-	Pesticide *PesticideForm
+	FormType string
+	Shrub    *ShrubForm
+	Lawn     *LawnForm
 }
 
 func (r shrubRow) ToDomain() (ShrubDetails, error) {
-	if !r.NumShrubs.Valid {
+	if !r.FleaOnly.Valid {
 		return ShrubDetails{}, errors.New("missing shrub details")
 	}
 	return ShrubDetails{
-		NumShrubs: int(r.NumShrubs.Int32),
+		FleaOnly: r.FleaOnly.Bool,
 	}, nil
 }
 
-func (r pesticideRow) ToDomain() (PesticideDetails, error) {
-	if !r.PesticideName.Valid {
-		return PesticideDetails{}, errors.New("missing pesticide details")
+func (r lawnRow) ToDomain() (LawnDetails, error) {
+	if !(r.FertOnly.Valid && r.LawnAreaSqFt.Valid) {
+		return LawnDetails{}, errors.New("missing lawn details")
 	}
-	return PesticideDetails{
-		PesticideName: r.PesticideName.String,
+	return LawnDetails{
+		FertOnly:     r.FertOnly.Bool,
+		LawnAreaSqFt: int(r.LawnAreaSqFt.Int32),
 	}, nil
 }
 
@@ -76,9 +108,9 @@ func NewShrubFormView(form ShrubForm) *FormView {
 	}
 }
 
-func NewPesticideFormView(form PesticideForm) *FormView {
+func NewLawnFormView(form LawnForm) *FormView {
 	return &FormView{
-		FormType:  "pesticide",
-		Pesticide: &form,
+		FormType: "lawn",
+		Lawn:     &form,
 	}
 }
