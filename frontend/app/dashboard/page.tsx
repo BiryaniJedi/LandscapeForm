@@ -100,7 +100,7 @@ export default function DashboardPage() {
                                     <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
                                         Shrub Forms
                                     </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
                                         Manage shrub landscaping forms
                                     </p>
                                     <button
@@ -115,7 +115,7 @@ export default function DashboardPage() {
                                     <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
                                         Lawn Forms
                                     </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
                                         Manage lawn treatment forms
                                     </p>
                                     <button
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                                     <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
                                         Total Forms
                                     </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
                                         All forms combined
                                     </p>
                                     <button
@@ -140,17 +140,38 @@ export default function DashboardPage() {
                                         View Your Forms
                                     </button>
                                 </div>
-                                {(user && user.role === 'admin') && (
+
+                            </div>
+                        </div>
+                        {/* Admin features */}
+                        {(user && user.role === 'admin') && (
+                            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
+                                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                                    Admin tools
+                                </h2>
+                                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <button
                                         onClick={() => router.push('/forms/all')}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                     >
                                         View Forms from all operators
                                     </button>
-                                )}
-
+                                    <button
+                                        onClick={() => router.push('/admin/users')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Manage operator accounts
+                                    </button>
+                                    <button
+                                        onClick={() => router.push('/admin/chemicals')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Manage chemicals
+                                    </button>
+                                </dl>
                             </div>
-                        </div>
+
+                        )}
 
                         {/* User Info Card */}
                         {user && (
