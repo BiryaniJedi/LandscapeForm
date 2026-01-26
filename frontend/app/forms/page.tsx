@@ -14,7 +14,6 @@ export default function ListFormsPage() {
 
     //query string params
     const [limit, setLimit] = useState<number>(10);
-    const [currentPage, setCurrentPage] = useState<number>(1);
     const [offset, setOffset] = useState<number>(0);
 
     const [formType, setFormType] = useState<string>('');
@@ -66,7 +65,6 @@ export default function ListFormsPage() {
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
-        setCurrentPage(1);
         setOffset(0);
     };
 
@@ -79,22 +77,8 @@ export default function ListFormsPage() {
         setFormType('');
         setSortBy('created_at');
         setOrder('DESC');
-        setCurrentPage(1);
         setOffset(0);
     };
-
-    const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
-        setOffset((newPage - 1) * limit);
-    };
-
-    const handleLimitChange = (newLimit: number) => {
-        setLimit(newLimit);
-        setCurrentPage(1);
-        setOffset(0);
-    };
-
-    const totalPages = formviewList ? Math.ceil(formviewList.count / limit) : 0;
 
     if (isLoading) {
         return (
@@ -112,7 +96,25 @@ export default function ListFormsPage() {
     }
 
     if (formviewList == null) {
-        return (<div>Not available! FormviewList is null</div>);
+        return (
+            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+                <header className="bg-white dark:bg-zinc-900 shadow">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                            No forms yet!
+                        </h1>
+                    </div>
+                </header>
+                <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <button
+                        onClick={() => router.push('/dashboard')}
+                        className="mt-4 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                    >
+                        Back to Dashboard
+                    </button>
+                </main>
+            </div>
+        );
     }
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -158,7 +160,7 @@ export default function ListFormsPage() {
                                     >
                                         <option value="">All Forms</option>
                                         <option value="shrub">Shrub</option>
-                                        <option value="pesticide">Pesticide</option>
+                                        <option value="lawn">Lawn</option>
                                     </select>
                                 </div>
 
@@ -226,39 +228,43 @@ export default function ListFormsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                 {formviewList.forms.map((formview: FormViewResponse) => (
                                     <div key={formview.id} className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                                First Name
-                                            </label>
-                                            <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name}</p>
-                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Name
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name} {formview.last_name}</p>
+                                            </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                                Last Name
-                                            </label>
-                                            <p className="text-zinc-900 dark:text-zinc-50">{formview.last_name}</p>
-                                        </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Address
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">
+                                                    {formview.street_number} {formview.street_name}
+                                                </p>
+                                            </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                                Home Phone
-                                            </label>
-                                            <p className="text-zinc-900 dark:text-zinc-50">{formview.home_phone}</p>
-                                        </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Location
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">
+                                                    {formview.town}, {formview.zip_code}
+                                                </p>
+                                            </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                                Form Type
-                                            </label>
-                                            <p className="text-zinc-900 dark:text-zinc-50">{formview.form_type}</p>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                                {formview.form_type == 'shrub' ? 'Number of Shrubs' : 'Name of Pesticide'}
-                                            </label>
-                                            <p className="text-zinc-900 dark:text-zinc-50">{formview.form_type == 'shrub' ? formview.num_shrubs : formview.pesticide_name}</p>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Form Type
+                                                </label>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formview.form_type === 'shrub'
+                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                    }`}>
+                                                    {formview.form_type}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

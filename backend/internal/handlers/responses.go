@@ -35,27 +35,44 @@ func respondSuccess(w http.ResponseWriter, message string) {
 
 func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
 	return ShrubFormResponse{
-		ID:        shrubForm.ID,
-		CreatedBy: shrubForm.CreatedBy,
-		CreatedAt: shrubForm.CreatedAt,
-		UpdatedAt: shrubForm.UpdatedAt,
-		FirstName: shrubForm.FirstName,
-		LastName:  shrubForm.LastName,
-		HomePhone: shrubForm.HomePhone,
-		NumShrubs: shrubForm.NumShrubs,
+		ID:           shrubForm.ID,
+		CreatedBy:    shrubForm.CreatedBy,
+		CreatedAt:    shrubForm.CreatedAt,
+		UpdatedAt:    shrubForm.UpdatedAt,
+		FormType:     shrubForm.FormType,
+		FirstName:    shrubForm.FirstName,
+		LastName:     shrubForm.LastName,
+		StreetNumber: shrubForm.StreetNumber,
+		StreetName:   shrubForm.StreetName,
+		Town:         shrubForm.Town,
+		ZipCode:      shrubForm.ZipCode,
+		HomePhone:    shrubForm.HomePhone,
+		OtherPhone:   shrubForm.OtherPhone,
+		CallBefore:   shrubForm.CallBefore,
+		IsHoliday:    shrubForm.IsHoliday,
+		FleaOnly:     shrubForm.FleaOnly,
 	}
 }
 
-func pesticideFormToResponse(pesticideForm forms.LawnForm) PesticideFormResponse {
-	return PesticideFormResponse{
-		ID:            pesticideForm.ID,
-		CreatedBy:     pesticideForm.CreatedBy,
-		CreatedAt:     pesticideForm.CreatedAt,
-		UpdatedAt:     pesticideForm.UpdatedAt,
-		FirstName:     pesticideForm.FirstName,
-		LastName:      pesticideForm.LastName,
-		HomePhone:     pesticideForm.HomePhone,
-		PesticideName: pesticideForm.PesticideName,
+func lawnFormToResponse(lawnForm forms.LawnForm) LawnFormResponse {
+	return LawnFormResponse{
+		ID:           lawnForm.ID,
+		CreatedBy:    lawnForm.CreatedBy,
+		CreatedAt:    lawnForm.CreatedAt,
+		UpdatedAt:    lawnForm.UpdatedAt,
+		FormType:     lawnForm.FormType,
+		FirstName:    lawnForm.FirstName,
+		LastName:     lawnForm.LastName,
+		StreetNumber: lawnForm.StreetNumber,
+		StreetName:   lawnForm.StreetName,
+		Town:         lawnForm.Town,
+		ZipCode:      lawnForm.ZipCode,
+		HomePhone:    lawnForm.HomePhone,
+		OtherPhone:   lawnForm.OtherPhone,
+		CallBefore:   lawnForm.CallBefore,
+		IsHoliday:    lawnForm.IsHoliday,
+		LawnAreaSqFt: lawnForm.LawnAreaSqFt,
+		FertOnly:     lawnForm.FertOnly,
 	}
 }
 
@@ -72,8 +89,15 @@ func formViewToResponse(view *forms.FormView) FormViewResponse {
 		resp.UpdatedAt = view.Shrub.Form.UpdatedAt
 		resp.FirstName = view.Shrub.Form.FirstName
 		resp.LastName = view.Shrub.Form.LastName
+		resp.StreetNumber = view.Shrub.Form.StreetNumber
+		resp.StreetName = view.Shrub.Form.StreetName
+		resp.Town = view.Shrub.Form.Town
+		resp.ZipCode = view.Shrub.Form.ZipCode
 		resp.HomePhone = view.Shrub.Form.HomePhone
-		resp.NumShrubs = &view.Shrub.NumShrubs
+		resp.OtherPhone = view.Shrub.Form.OtherPhone
+		resp.CallBefore = view.Shrub.Form.CallBefore
+		resp.IsHoliday = view.Shrub.Form.IsHoliday
+		resp.FleaOnly = &view.Shrub.FleaOnly
 	}
 
 	if view.Lawn != nil {
@@ -83,8 +107,16 @@ func formViewToResponse(view *forms.FormView) FormViewResponse {
 		resp.UpdatedAt = view.Lawn.Form.UpdatedAt
 		resp.FirstName = view.Lawn.Form.FirstName
 		resp.LastName = view.Lawn.Form.LastName
+		resp.StreetNumber = view.Lawn.Form.StreetNumber
+		resp.StreetName = view.Lawn.Form.StreetName
+		resp.Town = view.Lawn.Form.Town
+		resp.ZipCode = view.Lawn.Form.ZipCode
 		resp.HomePhone = view.Lawn.Form.HomePhone
-		resp.PesticideName = &view.Lawn.PesticideName
+		resp.OtherPhone = view.Lawn.Form.OtherPhone
+		resp.CallBefore = view.Lawn.Form.CallBefore
+		resp.IsHoliday = view.Lawn.Form.IsHoliday
+		resp.LawnAreaSqFt = &view.Lawn.LawnAreaSqFt
+		resp.FertOnly = &view.Lawn.FertOnly
 	}
 
 	return resp

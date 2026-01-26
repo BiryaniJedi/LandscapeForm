@@ -1,6 +1,6 @@
 // Package forms provides data access and domain models for landscape forms.
 // It encapsulates persistence logic, enforces ownership rules, and ensures
-// type-safe access to shrub and pesticide forms.
+// type-safe access to shrub and lawn forms.
 package forms
 
 import (
@@ -234,7 +234,7 @@ type ListFormsOptions struct {
 	Offset int // Number of results to skip
 
 	// Filtering
-	FormType   string // Filter by form type: "shrub" or "pesticide" (empty = all)
+	FormType   string // Filter by form type: "shrub" or "lawn" (empty = all)
 	SearchName string // Search in first_name or last_name (partial match)
 
 	// Sorting
@@ -336,7 +336,7 @@ func (r *FormsRepository) ListFormsByUserId(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form Form
+			form  Form
 			shrub shrubRow
 			lawn  lawnRow
 		)
@@ -499,7 +499,7 @@ func (r *FormsRepository) ListAllForms(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form Form
+			form  Form
 			shrub shrubRow
 			lawn  lawnRow
 		)
@@ -602,7 +602,7 @@ func (r *FormsRepository) GetFormViewById(
 	`
 
 	var (
-		form Form
+		form  Form
 		shrub shrubRow
 		lawn  lawnRow
 	)

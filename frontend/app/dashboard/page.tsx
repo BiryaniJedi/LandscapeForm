@@ -1,31 +1,13 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
-import { formsClient } from '@/lib/api/forms';
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading, logout, } = useAuth();
     const [error, setError] = useState<string | null>(null);
-    const [shrubCount, setShrubCount] = useState(0)
-    const [pesticideCount, setPesticideCount] = useState(0)
-
-    useEffect(() => {
-        const fetchFormCounts = async () => {
-            try {
-                const shrubForms = await formsClient.listFormsByUserId({ form_type: 'shrub' })
-                const pesticideForms = await formsClient.listFormsByUserId({ form_type: 'pesticide' })
-                setShrubCount(shrubForms.count)
-                setPesticideCount(pesticideForms.count)
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to fetch form counts');
-            }
-        }
-        fetchFormCounts();
-    }, [])
-
     const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
@@ -121,9 +103,6 @@ export default function DashboardPage() {
                                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                                         Manage shrub landscaping forms
                                     </p>
-                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-                                        {shrubCount}
-                                    </p>
                                     <button
                                         onClick={() => router.push('/forms/shrub')}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -134,19 +113,16 @@ export default function DashboardPage() {
 
                                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
                                     <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
-                                        Pesticide Forms
+                                        Lawn Forms
                                     </h3>
                                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                        Manage pesticide application forms
-                                    </p>
-                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
-                                        {pesticideCount}
+                                        Manage lawn treatment forms
                                     </p>
                                     <button
-                                        onClick={() => router.push('/forms/pesticide')}
+                                        onClick={() => router.push('/forms/lawn')}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                     >
-                                        Create Pesticide Form
+                                        Create Lawn Form
                                     </button>
                                 </div>
 
@@ -156,9 +132,6 @@ export default function DashboardPage() {
                                     </h3>
                                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                                         All forms combined
-                                    </p>
-                                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-                                        {pesticideCount + shrubCount}
                                     </p>
                                     <button
                                         onClick={() => router.push('/forms')}
@@ -172,7 +145,7 @@ export default function DashboardPage() {
                                         onClick={() => router.push('/forms/all')}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                     >
-                                        View Forms from all users
+                                        View Forms from all operators
                                     </button>
                                 )}
 

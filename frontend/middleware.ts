@@ -6,7 +6,8 @@ export function middleware(req: NextRequest) {
 
     const isProtected =
         pathname.startsWith('/forms') ||
-        pathname.startsWith('/dashboard');
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/admin');
 
     if (isProtected && !token) {
         const loginUrl = new URL('/login', req.url);
@@ -18,5 +19,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/forms/:path*', '/dashboard/:path*'],
+    matcher: ['/forms/:path*', '/dashboard/:path*', '/admin/:path*'],
 };

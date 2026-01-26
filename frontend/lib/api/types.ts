@@ -45,29 +45,59 @@ export interface AuthResponse {
 export interface CreateShrubFormRequest {
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    num_shrubs: number;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    flea_only: boolean;
 }
 
-export interface CreatePesticideFormRequest {
+export interface CreateLawnFormRequest {
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    pesticide_name: string;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    lawn_area_sq_ft: number;
+    fert_only: boolean;
 }
 
 export interface UpdateShrubFormRequest {
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    num_shrubs: number;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    flea_only: boolean;
 }
 
-export interface UpdatePesticideFormRequest {
+export interface UpdateLawnFormRequest {
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    pesticide_name: string;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    lawn_area_sq_ft: number;
+    fert_only: boolean;
 }
 
 /**
@@ -111,48 +141,71 @@ export interface ShrubForm {
     created_by: string;
     created_at: string;
     updated_at: string;
-    form_type: 'shrub' | 'pesticide';
+    form_type: 'shrub' | 'lawn';
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
     // Shrub-specific field
-    num_shrubs: number;
+    flea_only: boolean;
 }
 
 /**
- * PesticideForm - matches backend PesticideFormResponse exactly
- * Contains all form fields with all pesticide form specific fields
+ * LawnForm - matches backend LawnFormResponse exactly
+ * Contains all form fields with all lawn form specific fields
  */
-export interface PesticideForm {
+export interface LawnForm {
     id: string;
     created_by: string;
     created_at: string;
     updated_at: string;
-    form_type: 'shrub' | 'pesticide';
+    form_type: 'shrub' | 'lawn';
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    // Pesticide-specific field
-    pesticide_name: string;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    // Lawn-specific fields
+    lawn_area_sq_ft: number;
+    fert_only: boolean;
 }
 
 /**
  * FormViewResponse - matches backend FormResponse exactly
- * Contains all form fields with optional num_shrubs (shrub forms) or pesticide_name (pesticide forms)
+ * Contains all form fields with optional flea_only (shrub forms) or lawn_area_sq_ft/fert_only (lawn forms)
  */
 export interface FormViewResponse {
     id: string;
     created_by: string;
     created_at: string;
     updated_at: string;
-    form_type: 'shrub' | 'pesticide';
+    form_type: 'shrub' | 'lawn';
     first_name: string;
     last_name: string;
+    street_number: string;
+    street_name: string;
+    town: string;
+    zip_code: string;
     home_phone: string;
-    // Shrub-specific field (null if pesticide form)
-    num_shrubs?: number | null;
-    // Pesticide-specific field (null if shrub form)
-    pesticide_name?: string | null;
+    other_phone: string;
+    call_before: boolean;
+    is_holiday: boolean;
+    // Shrub-specific field (null if lawn form)
+    flea_only?: boolean | null;
+    // Lawn-specific fields (null if shrub form)
+    lawn_area_sq_ft?: number | null;
+    fert_only?: boolean | null;
 }
 
 /**
@@ -174,6 +227,34 @@ export interface ErrorResponse {
 
 export interface SuccessResponse {
     message: string;
+}
+
+// ============================================================================
+// Chemicals API Types
+// ============================================================================
+
+export interface Chemical {
+    id: number;
+    category: 'lawn' | 'shrub';
+    brand_name: string;
+    chemical_name: string;
+    epa_reg_no: string;
+    recipe: string;
+    unit: string;
+}
+
+export interface CreateChemicalRequest {
+    category: 'lawn' | 'shrub';
+    brand_name: string;
+    chemical_name: string;
+    epa_reg_no: string;
+    recipe: string;
+    unit: string;
+}
+
+export interface ListChemicalsResponse {
+    chemicals: Chemical[];
+    count: number;
 }
 
 // ============================================================================

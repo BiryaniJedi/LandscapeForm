@@ -1,11 +1,11 @@
 import {
     CreateShrubFormRequest,
-    CreatePesticideFormRequest,
+    CreateLawnFormRequest,
     UpdateShrubFormRequest,
-    UpdatePesticideFormRequest,
+    UpdateLawnFormRequest,
     ListFormsParams,
     ShrubForm,
-    PesticideForm,
+    LawnForm,
     FormViewResponse,
     CreateFormResponse,
     ListFormsResponse,
@@ -43,21 +43,21 @@ export class FormsClient extends ApiClient {
         })
     }
     /**
-     * Create a new pesticide form.
+     * Create a new lawn form.
      *
-     * Sends a `POST` request to `/api/forms/pesticide`.
+     * Sends a `POST` request to `/api/forms/lawn`.
      *
-     * @param createPesticideFormRequest - Payload used to create the pesticide form
+     * @param createLawnFormRequest - Payload used to create the lawn form
      * @returns A promise that resolves to the created form's ID
      *
      * @throws {FormValidationError} If the request payload is invalid
      * @throws {AuthError} If the user is not authenticated
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async createPesticideForm(createPesticideFormRequest: CreatePesticideFormRequest): Promise<CreateFormResponse> {
-        return await this.request<CreateFormResponse>('/forms/pesticide', {
+    async createLawnForm(createLawnFormRequest: CreateLawnFormRequest): Promise<CreateFormResponse> {
+        return await this.request<CreateFormResponse>('/forms/lawn', {
             method: 'POST',
-            body: JSON.stringify(createPesticideFormRequest),
+            body: JSON.stringify(createLawnFormRequest),
             credentials: 'include',
         })
     }
@@ -84,22 +84,22 @@ export class FormsClient extends ApiClient {
     }
 
     /**
-     * Update an existing pesticide form.
+     * Update an existing lawn form.
      *
-     * Sends a `PUT` request to `/api/forms/pesticide/{formID}`.
+     * Sends a `PUT` request to `/api/forms/lawn/{formID}`.
      *
-     * @param formID - Unique identifier of the pesticide form
-     * @param updatePesticideFormRequest - Updated form values
+     * @param formID - Unique identifier of the lawn form
+     * @param updateLawnFormRequest - Updated form values
      * @returns A promise that resolves to the updated form
      *
      * @throws {FormNotFoundError} If the form does not exist
      * @throws {FormValidationError} If the update payload is invalid
      * @throws {AuthError} If the user is not authenticated
      */
-    async updatePesticideForm(formID: string, updatePesticideFormRequest: UpdatePesticideFormRequest): Promise<PesticideForm> {
-        return await this.request<PesticideForm>(`/forms/pesticide/${formID}`, {
+    async updateLawnForm(formID: string, updateLawnFormRequest: UpdateLawnFormRequest): Promise<LawnForm> {
+        return await this.request<LawnForm>(`/forms/lawn/${formID}`, {
             method: 'PUT',
-            body: JSON.stringify(updatePesticideFormRequest),
+            body: JSON.stringify(updateLawnFormRequest),
             credentials: 'include',
         })
     }
@@ -143,9 +143,9 @@ export class FormsClient extends ApiClient {
     }
 
     /**
-     * Retrieve a single pesticide form by its ID.
+     * Retrieve a single lawn form by its ID.
      *
-     * Sends a `GET` request to `/api/forms/shrub/{formID}` and returns a
+     * Sends a `GET` request to `/api/forms/lawn/{formID}` and returns a
      * generic {@link FormViewResponse}, regardless of form type.
      *
      * @param formID - Unique identifier of the form to retrieve
@@ -154,8 +154,8 @@ export class FormsClient extends ApiClient {
      * @throws {FormNotFoundError} If the form does not exist
      * @throws {AuthError} If the user is not authenticated
      */
-    async getPesticideForm(formID: string): Promise<PesticideForm> {
-        return await this.request<PesticideForm>(`/forms/pesticide/${formID}`, {
+    async getLawnForm(formID: string): Promise<LawnForm> {
+        return await this.request<LawnForm>(`/forms/lawn/${formID}`, {
             method: 'GET',
             credentials: 'include',
         })

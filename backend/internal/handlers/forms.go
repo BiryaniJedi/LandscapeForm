@@ -45,14 +45,20 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add validation
 	// - Check required fields are not empty
 	// - Validate phone number format
-	// - Validate num_shrubs > 0
 
 	shrubFormInput := forms.CreateShrubFormInput{
-		CreatedBy: userID,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		HomePhone: req.HomePhone,
-		NumShrubs: req.NumShrubs,
+		CreatedBy:    userID,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		StreetNumber: req.StreetNumber,
+		StreetName:   req.StreetName,
+		Town:         req.Town,
+		ZipCode:      req.ZipCode,
+		HomePhone:    req.HomePhone,
+		OtherPhone:   req.OtherPhone,
+		CallBefore:   req.CallBefore,
+		IsHoliday:    req.IsHoliday,
+		FleaOnly:     req.FleaOnly,
 	}
 
 	shrubFormId, err := h.repo.CreateShrubForm(r.Context(), shrubFormInput)
@@ -64,11 +70,11 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, CreateFormResponse{shrubFormId})
 }
 
-// CreatePesticideForm handles POST /api/forms/pesticide
-func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Request) {
+// CreateLawnForm handles POST /api/forms/lawn
+func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
-	var req CreatePesticideFormRequest
+	var req CreateLawnFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -77,23 +83,31 @@ func (h *FormsHandler) CreatePesticideForm(w http.ResponseWriter, r *http.Reques
 	// TODO: Add validation
 	// - Check required fields are not empty
 	// - Validate phone number format
-	// - Validate pesticide_name is not empty
+	// - Validate lawn_area_sq_ft > 0
 
-	pesticideFormInput := forms.CreatePesticideFormInput{
-		CreatedBy:     userID,
-		FirstName:     req.FirstName,
-		LastName:      req.LastName,
-		HomePhone:     req.HomePhone,
-		PesticideName: req.PesticideName,
+	lawnFormInput := forms.CreateLawnFormInput{
+		CreatedBy:    userID,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		StreetNumber: req.StreetNumber,
+		StreetName:   req.StreetName,
+		Town:         req.Town,
+		ZipCode:      req.ZipCode,
+		HomePhone:    req.HomePhone,
+		OtherPhone:   req.OtherPhone,
+		CallBefore:   req.CallBefore,
+		IsHoliday:    req.IsHoliday,
+		LawnAreaSqFt: req.LawnAreaSqFt,
+		FertOnly:     req.FertOnly,
 	}
 
-	pesticideFormId, err := h.repo.CreatePesticideForm(r.Context(), pesticideFormInput)
+	lawnFormId, err := h.repo.CreateLawnForm(r.Context(), lawnFormInput)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, CreateFormResponse{pesticideFormId})
+	respondJSON(w, http.StatusCreated, CreateFormResponse{lawnFormId})
 }
 
 // ListForms handles GET /api/forms?sort_by=created_at&order=DESC&limit=10&offset=0&type=shrub&search=john
@@ -169,7 +183,7 @@ func parseListFormsOptions(r *http.Request) forms.ListFormsOptions {
 	}
 
 	// Filtering
-	opts.FormType = r.URL.Query().Get("type")     // "shrub" or "pesticide"
+	opts.FormType = r.URL.Query().Get("type")     // "shrub" or "lawn"
 	opts.SearchName = r.URL.Query().Get("search") // search in first_name or last_name
 
 	// Sorting
@@ -209,8 +223,8 @@ func (h *FormsHandler) GetShrubForm(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, shrubFormToResponse(shrubForm))
 }
 
-// GetPesticideForm handles GET /api/forms/pesticide/{id}
-func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) {
+// GetLawnForm handles GET /api/forms/lawn/{id}
+func (h *FormsHandler) GetLawnForm(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
 	formID := chi.URLParam(r, "id")
@@ -219,7 +233,7 @@ func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	pesticideForm, err := h.repo.GetPesticideFormById(r.Context(), formID, userID)
+	lawnForm, err := h.repo.GetLawnFormById(r.Context(), formID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, err.Error())
@@ -229,7 +243,7 @@ func (h *FormsHandler) GetPesticideForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	respondJSON(w, http.StatusOK, pesticideFormToResponse(pesticideForm))
+	respondJSON(w, http.StatusOK, lawnFormToResponse(lawnForm))
 }
 
 // GetFormView handles GET /api/forms/{id}
@@ -274,10 +288,17 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shrubFormInput := forms.UpdateShrubFormInput{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		HomePhone: req.HomePhone,
-		NumShrubs: req.NumShrubs,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		StreetNumber: req.StreetNumber,
+		StreetName:   req.StreetName,
+		Town:         req.Town,
+		ZipCode:      req.ZipCode,
+		HomePhone:    req.HomePhone,
+		OtherPhone:   req.OtherPhone,
+		CallBefore:   req.CallBefore,
+		IsHoliday:    req.IsHoliday,
+		FleaOnly:     req.FleaOnly,
 	}
 
 	shrubForm, err := h.repo.UpdateShrubFormById(r.Context(), formID, userID, shrubFormInput)
@@ -293,8 +314,8 @@ func (h *FormsHandler) UpdateShrubForm(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, shrubFormToResponse(shrubForm))
 }
 
-// UpdatePesticideForm handles PUT /api/forms/pesticide/{id}
-func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Request) {
+// UpdateLawnForm handles PUT /api/forms/lawn/{id}
+func (h *FormsHandler) UpdateLawnForm(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
 	formID := chi.URLParam(r, "id")
@@ -304,20 +325,28 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Parse request
-	var req UpdatePesticideFormRequest
+	var req UpdateLawnFormRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	pesticideFormInput := forms.UpdatePesticideFormInput{
-		FirstName:     req.FirstName,
-		LastName:      req.LastName,
-		HomePhone:     req.HomePhone,
-		PesticideName: req.PesticideName,
+	lawnFormInput := forms.UpdateLawnFormInput{
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		StreetNumber: req.StreetNumber,
+		StreetName:   req.StreetName,
+		Town:         req.Town,
+		ZipCode:      req.ZipCode,
+		HomePhone:    req.HomePhone,
+		OtherPhone:   req.OtherPhone,
+		CallBefore:   req.CallBefore,
+		IsHoliday:    req.IsHoliday,
+		LawnAreaSqFt: req.LawnAreaSqFt,
+		FertOnly:     req.FertOnly,
 	}
 
-	pesticideForm, err := h.repo.UpdatePesticideFormById(r.Context(), formID, userID, pesticideFormInput)
+	lawnForm, err := h.repo.UpdateLawnFormById(r.Context(), formID, userID, lawnFormInput)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(w, http.StatusNotFound, err.Error())
@@ -327,7 +356,7 @@ func (h *FormsHandler) UpdatePesticideForm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respondJSON(w, http.StatusOK, pesticideFormToResponse(pesticideForm))
+	respondJSON(w, http.StatusOK, lawnFormToResponse(lawnForm))
 }
 
 // DeleteForm handles DELETE /api/forms/{id}
