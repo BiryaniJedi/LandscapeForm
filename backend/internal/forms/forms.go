@@ -249,7 +249,6 @@ func (r *FormsRepository) CreateLawnForm(
 
 	// Insert pesticide applications if any
 	for _, app := range lawnFormInput.Applications {
-		fmt.Printf("app: %v\n", app)
 		_, err = tx.ExecContext(ctx, `
 			INSERT INTO pesticide_applications (
 				form_id,

@@ -84,7 +84,7 @@ export default function CreateLawnFormPage() {
         setIsSubmitting(true);
 
         try {
-            const requestData = {
+            const response = await formsClient.createLawnForm({
                 first_name: firstName,
                 last_name: lastName,
                 street_number: streetNumber,
@@ -98,12 +98,7 @@ export default function CreateLawnFormPage() {
                 lawn_area_sq_ft: parseInt(lawnAreaSqFt) || 0,
                 fert_only: fertOnly,
                 applications: applications,
-            };
-
-            console.log('Submitting lawn form with data:', requestData);
-            console.log('Applications array:', applications);
-
-            const response = await formsClient.createLawnForm(requestData);
+            });
 
             router.push(`/forms/lawn/${response.id}`);
         } catch (err) {

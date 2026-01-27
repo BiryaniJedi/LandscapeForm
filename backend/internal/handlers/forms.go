@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -100,13 +99,6 @@ func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
-	}
-
-	// Debug logging
-	fmt.Printf("Received lawn form request with %d applications\n", len(req.Applications))
-	for i, app := range req.Applications {
-		fmt.Printf("  App %d: ChemUsed=%d, Rate=%s, Amount=%.2f, Location=%s, Timestamp=%s\n",
-			i, app.ChemUsed, app.Rate, app.AmountApplied, app.LocationCode, app.AppTimestamp)
 	}
 
 	// TODO: Add validation
