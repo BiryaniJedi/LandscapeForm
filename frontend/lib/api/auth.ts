@@ -39,6 +39,27 @@ class AuthClient extends ApiClient {
     }
 
     /**
+     * Get current user (alias for me())
+     */
+    async getCurrentUser(): Promise<User> {
+        return this.me();
+    }
+
+    /**
+     * Update current user information
+     */
+    async updateUser(userData: Partial<RegisterRequest>): Promise<User> {
+        // First get current user to get their ID
+        const currentUser = await this.me();
+
+        return this.request<User>(`/users/${currentUser.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(userData),
+            credentials: 'include',
+        });
+    }
+
+    /**
      * Logout user - calls backend to clear cookie
      */
     async logout(): Promise<void> {

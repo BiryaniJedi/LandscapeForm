@@ -45,21 +45,23 @@ export default function ShrubFormDetailPage() {
             <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
                 <header className="bg-white dark:bg-zinc-900 shadow">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                            Error Loading Form
-                        </h1>
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                                Error Loading Form
+                            </h1>
+                            <button
+                                onClick={() => router.push('/dashboard')}
+                                className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                Back to Dashboard
+                            </button>
+                        </div>
                     </div>
                 </header>
                 <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                         <p className="text-red-800 dark:text-red-200">{error}</p>
                     </div>
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="mt-4 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                    >
-                        Back to Dashboard
-                    </button>
                 </main>
             </div>
         );
@@ -69,9 +71,17 @@ export default function ShrubFormDetailPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <header className="bg-white dark:bg-zinc-900 shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                        Shrub Form Details
-                    </h1>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                            Shrub Form Details
+                        </h1>
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -133,15 +143,6 @@ export default function ShrubFormDetailPage() {
                             </div>
                         </div>
                     )}
-
-                    <div className="mt-6">
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                        >
-                            Back to Dashboard
-                        </button>
-                    </div>
                 </div>
             </main>
         </div>

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/forms"
@@ -225,6 +226,22 @@ func parseListFormsOptions(r *http.Request) forms.ListFormsOptions {
 	// Filtering
 	opts.FormType = r.URL.Query().Get("type")     // "shrub" or "lawn"
 	opts.SearchName = r.URL.Query().Get("search") // search in first_name or last_name
+
+	// Parse chemical IDs - supports both ?chemicals=1,2,3 and ?chemicals[]=1&chemicals[]=2
+	if chemicalsStr := r.URL.Query().Get("chemicals"); chemicalsStr != "" {
+		chemicalStrs := strings.Split(chemicalsStr, ",")
+		for _, chemStr := range chemicalStrs {
+			if chemID, err := strconv.Atoi(strings.TrimSpace(chemStr)); err == nil {
+				opts.ChemicalIDs = append(opts.ChemicalIDs, chemID)
+			}
+		}
+	} else if chemicalsList := r.URL.Query()["chemicals[]"]; len(chemicalsList) > 0 {
+		for _, chemStr := range chemicalsList {
+			if chemID, err := strconv.Atoi(strings.TrimSpace(chemStr)); err == nil {
+				opts.ChemicalIDs = append(opts.ChemicalIDs, chemID)
+			}
+		}
+	}
 
 	// Sorting
 	opts.SortBy = r.URL.Query().Get("sort_by")

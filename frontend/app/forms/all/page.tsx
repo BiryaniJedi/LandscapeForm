@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
-import { ListFormsResponse, FormViewResponse, AuthError } from '@/lib/api/types';
+import { chemicalsClient } from '@/lib/api/chemicals';
+import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
 
 export default function ListFormsAllUsersPage() {
     const router = useRouter();
@@ -14,6 +15,9 @@ export default function ListFormsAllUsersPage() {
     const [deletingFormId, setDeletingFormId] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [formToDelete, setFormToDelete] = useState<FormViewResponse | null>(null);
+
+    const [chemicals, setChemicals] = useState<Chemical[]>([]);
+    const [selectedChemicalDropdown, setSelectedChemicalDropdown] = useState<string>('');
 
     //query string params
     const [offset, setOffset] = useState<number>(0);
@@ -30,18 +34,33 @@ export default function ListFormsAllUsersPage() {
     const [order, setOrder] = useState<string>('DESC');
     const [orderInput, setOrderInput] = useState<string>('DESC');
 
+    const [chemicalsFilter, setChemicalsFilter] = useState<number[]>([]);
+    const [chemicalsFilterInput, setChemicalsFilterInput] = useState<number[]>([]);
+
+    useEffect(() => {
+        const fetchChemicals = async () => {
+            try {
+                const lawnChems = await chemicalsClient.listChemicals('lawn');
+                const shrubChems = await chemicalsClient.listChemicals('shrub');
+                setChemicals([...lawnChems.chemicals, ...shrubChems.chemicals]);
+            } catch (err) {
+                console.error('Failed to load chemicals:', err);
+            }
+        };
+        fetchChemicals();
+    }, []);
+
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const data = await formsClient.listFormsAllUsers(
-                    {
-                        offset: offset,
-                        form_type: formType || null,
-                        search_name: searchName || null,
-                        sort_by: sortBy || null,
-                        order: order || null,
-                    }
-                );
+                const data = await formsClient.listFormsAllUsers({
+                    offset: offset,
+                    form_type: formType || null,
+                    search_name: searchName || null,
+                    sort_by: sortBy || null,
+                    order: order || null,
+                    chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
+                });
                 setFormviewList(data);
                 setError(null);
             } catch (err) {
@@ -59,13 +78,25 @@ export default function ListFormsAllUsersPage() {
         };
 
         fetchForms();
-    }, [offset, formType, searchName, sortBy, order]);
+    }, [offset, formType, searchName, sortBy, order, chemicalsFilter]);
+
+    const handleAddChemical = () => {
+        if (selectedChemicalDropdown && !chemicalsFilterInput.includes(parseInt(selectedChemicalDropdown))) {
+            setChemicalsFilterInput([...chemicalsFilterInput, parseInt(selectedChemicalDropdown)]);
+            setSelectedChemicalDropdown('');
+        }
+    };
+
+    const handleRemoveChemical = (chemId: number) => {
+        setChemicalsFilterInput(chemicalsFilterInput.filter(id => id !== chemId));
+    };
 
     const handleApplyFilters = () => {
         setSearchName(searchNameInput);
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
+        setChemicalsFilter(chemicalsFilterInput);
         setOffset(0);
     };
 
@@ -74,10 +105,12 @@ export default function ListFormsAllUsersPage() {
         setFormTypeInput('');
         setSortByInput('created_at');
         setOrderInput('DESC');
+        setChemicalsFilterInput([]);
         setSearchName('');
         setFormType('');
         setSortBy('created_at');
         setOrder('DESC');
+        setChemicalsFilter([]);
         setOffset(0);
     };
 
@@ -107,6 +140,7 @@ export default function ListFormsAllUsersPage() {
                 search_name: searchName || null,
                 sort_by: sortBy || null,
                 order: order || null,
+                chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
             });
             setFormviewList(data);
             setError(null);
@@ -162,9 +196,17 @@ export default function ListFormsAllUsersPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <header className="bg-white dark:bg-zinc-900 shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                        All forms
-                    </h1>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                            All forms
+                        </h1>
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -238,10 +280,63 @@ export default function ListFormsAllUsersPage() {
                                         <option value="ASC">Ascending</option>
                                     </select>
                                 </div>
+
+                            </div>
+
+                            {/* Chemicals Filter - Full Width Row */}
+                            <div className="mt-4">
+                                    <label htmlFor="chemicalsFilterInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Filter by Chemicals Used
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <select
+                                            id="chemicalsFilterInput"
+                                            value={selectedChemicalDropdown}
+                                            onChange={(e) => setSelectedChemicalDropdown(e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="">Select a chemical...</option>
+                                            {chemicals.map((chem) => (
+                                                <option key={chem.id} value={chem.id}>
+                                                    {chem.brand_name} - {chem.chemical_name} ({chem.category})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddChemical}
+                                            disabled={!selectedChemicalDropdown}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+                                    {chemicalsFilterInput.length > 0 && (
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {chemicalsFilterInput.map((chemId) => {
+                                                const chem = chemicals.find(c => c.id === chemId);
+                                                return chem ? (
+                                                    <div
+                                                        key={chemId}
+                                                        className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                    >
+                                                        <span>{chem.brand_name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveChemical(chemId)}
+                                                            className="hover:text-blue-600 dark:hover:text-blue-300"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    )}
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-3 mt-4">
                                 <button
                                     onClick={handleApplyFilters}
                                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -255,6 +350,7 @@ export default function ListFormsAllUsersPage() {
                                     Reset
                                 </button>
                             </div>
+
                         </div>
 
                         {/* Error Display */}
@@ -346,15 +442,6 @@ export default function ListFormsAllUsersPage() {
                         )}
                     </div>
                 )}
-
-                <div className="mt-6">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                    >
-                        Back to Dashboard
-                    </button>
-                </div>
             </main>
 
             {/* Delete Confirmation Modal */}

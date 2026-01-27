@@ -181,6 +181,9 @@ export class FormsClient extends ApiClient {
         if (params.search_name) queryParams.append('search', params.search_name)
         if (params.sort_by) queryParams.append('sort_by', params.sort_by)
         if (params.order) queryParams.append('order', params.order)
+        if (params.chemical_ids && params.chemical_ids.length > 0) {
+            queryParams.append('chemicals', params.chemical_ids.join(','))
+        }
 
         const queryString = queryParams.toString()
         const url = queryString ? `/forms?${queryString}` : '/forms'
@@ -212,9 +215,14 @@ export class FormsClient extends ApiClient {
         if (params?.search_name) queryParams.append('search', params.search_name)
         if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
         if (params?.order) queryParams.append('order', params.order)
+        if (params?.chemical_ids && params.chemical_ids.length > 0) {
+            console.log('[API Client] Adding chemicals to query:', params.chemical_ids)
+            queryParams.append('chemicals', params.chemical_ids.join(','))
+        }
 
         const queryString = queryParams.toString()
         const url = queryString ? `/admin/forms?${queryString}` : '/admin/forms'
+        console.log('[API Client] Request URL:', url)
 
         return await this.request<ListFormsResponse>(url, {
             method: 'GET',

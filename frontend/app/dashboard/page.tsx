@@ -61,14 +61,22 @@ export default function DashboardPage() {
                             </p>
                         )}
                     </div>
-                    <form onSubmit={handleLogout} className="space-y-6">
+                    <div className="flex gap-2">
                         <button
-                            type="submit"
+                            onClick={() => router.push('/settings')}
                             className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
                         >
-                            Logout
+                            Settings
                         </button>
-                    </form>
+                        <form onSubmit={handleLogout}>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </header>
 
@@ -89,57 +97,29 @@ export default function DashboardPage() {
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
                             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-                                Welcome to Landscaping Forms
+                                Create and View Forms
                             </h2>
-                            <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                                This is your dashboard. Forms management features coming soon!
-                            </p>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
-                                    <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
-                                        Shrub Forms
-                                    </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
-                                        Manage shrub landscaping forms
-                                    </p>
-                                    <button
-                                        onClick={() => router.push('/forms/shrub')}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                    >
-                                        Create Shrub Form
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => router.push('/forms/shrub')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Create Shrub Form
+                                </button>
 
-                                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
-                                    <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
-                                        Lawn Forms
-                                    </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
-                                        Manage lawn treatment forms
-                                    </p>
-                                    <button
-                                        onClick={() => router.push('/forms/lawn')}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                    >
-                                        Create Lawn Form
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => router.push('/forms/lawn')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Create Lawn Form
+                                </button>
 
-                                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
-                                    <h3 className="font-medium text-zinc-900 dark:text-zinc-50 mb-2">
-                                        Total Forms
-                                    </h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 py-2">
-                                        All forms combined
-                                    </p>
-                                    <button
-                                        onClick={() => router.push('/forms')}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                    >
-                                        View Your Forms
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => router.push('/forms')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    View Your Forms
+                                </button>
 
                             </div>
                         </div>

@@ -121,7 +121,7 @@ export interface UpdateLawnFormRequest {
 
 /**
  * Query parameters for listing forms with pagination, filtering, and sorting
- * 
+ *
  *
  * limit?: number;
    offset?: number;
@@ -129,6 +129,7 @@ export interface UpdateLawnFormRequest {
    search_name?: string;
    sort_by?: 'first_name' | 'last_name' | 'created_at';
    order?: 'ASC' | 'DESC';
+   chemical_ids?: number[];
  */
 export interface ListFormsParams {
     limit?: number | null;
@@ -137,6 +138,7 @@ export interface ListFormsParams {
     search_name?: string | null;
     sort_by?: string | null;
     order?: string | null;
+    chemical_ids?: number[] | null;
 }
 
 // ============================================================================

@@ -286,8 +286,9 @@ type ListFormsOptions struct {
 	Offset int // Number of results to skip
 
 	// Filtering
-	FormType   string // Filter by form type: "shrub" or "lawn" (empty = all)
-	SearchName string // Search in first_name or last_name (partial match)
+	FormType    string // Filter by form type: "shrub" or "lawn" (empty = all)
+	SearchName  string // Search in first_name or last_name (partial match)
+	ChemicalIDs []int  // Filter by chemicals used in applications (empty = no filter)
 
 	// Sorting
 	SortBy string // "first_name", "last_name", or "created_at" (defaults to "created_at")
@@ -336,6 +337,20 @@ func (r *FormsRepository) ListFormsByUserId(
 		whereConditions = append(whereConditions, fmt.Sprintf("(f.first_name ILIKE $%d OR f.last_name ILIKE $%d)", argIndex, argIndex))
 		args = append(args, "%"+opts.SearchName+"%")
 		argIndex++
+	}
+
+	// Add chemical filter - find forms that have applications using any of the specified chemicals
+	if len(opts.ChemicalIDs) > 0 {
+		placeholders := make([]string, len(opts.ChemicalIDs))
+		for i, chemID := range opts.ChemicalIDs {
+			placeholders[i] = fmt.Sprintf("$%d", argIndex)
+			args = append(args, chemID)
+			argIndex++
+		}
+		whereConditions = append(whereConditions, fmt.Sprintf(
+			"f.id IN (SELECT DISTINCT form_id FROM pesticide_applications WHERE chem_used IN (%s))",
+			strings.Join(placeholders, ", "),
+		))
 	}
 
 	whereClause := strings.Join(whereConditions, " AND ")
@@ -496,6 +511,20 @@ func (r *FormsRepository) ListAllForms(
 		whereConditions = append(whereConditions, fmt.Sprintf("(f.first_name ILIKE $%d OR f.last_name ILIKE $%d)", argIndex, argIndex))
 		args = append(args, "%"+opts.SearchName+"%")
 		argIndex++
+	}
+
+	// Add chemical filter - find forms that have applications using any of the specified chemicals
+	if len(opts.ChemicalIDs) > 0 {
+		placeholders := make([]string, len(opts.ChemicalIDs))
+		for i, chemID := range opts.ChemicalIDs {
+			placeholders[i] = fmt.Sprintf("$%d", argIndex)
+			args = append(args, chemID)
+			argIndex++
+		}
+		whereConditions = append(whereConditions, fmt.Sprintf(
+			"f.id IN (SELECT DISTINCT form_id FROM pesticide_applications WHERE chem_used IN (%s))",
+			strings.Join(placeholders, ", "),
+		))
 	}
 
 	whereClause := ""

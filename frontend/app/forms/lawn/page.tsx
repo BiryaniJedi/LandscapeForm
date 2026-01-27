@@ -127,15 +127,17 @@ export default function CreateLawnFormPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <header className="bg-white dark:bg-zinc-900 shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                        Create Lawn Form
-                    </h1>
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="mt-4 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                    >
-                        Back to Dashboard
-                    </button>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                            Create Lawn Form
+                        </h1>
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
                 </div>
             </header>
 
