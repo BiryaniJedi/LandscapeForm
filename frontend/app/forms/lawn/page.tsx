@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
+import { chemicalsClient } from '@/lib/api/chemicals';
+import { Chemical, PesticideApplication } from '@/lib/api/types';
 
 export default function CreateLawnFormPage() {
     const router = useRouter();
+    const [chemicals, setChemicals] = useState<Chemical[]>([]);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [streetNumber, setStreetNumber] = useState('');
@@ -20,6 +23,60 @@ export default function CreateLawnFormPage() {
     const [fertOnly, setFertOnly] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [applications, setApplications] = useState<PesticideApplication[]>([]);
+    const [chemIndex, setChemIndex] = useState('');
+    const [appTimestamp, setAppTimestamp] = useState('');
+    const [rate, setRate] = useState('');
+    const [amountApplied, setAmountApplied] = useState('');
+    const [locationCode, setLocationCode] = useState('');
+
+    const fetchLawnChemicals = async () => {
+        setIsLoading(true)
+        try {
+            const data = await chemicalsClient.listChemicals('lawn');
+            setChemicals(data.chemicals);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load chemicals');
+        } finally {
+            setIsLoading(false)
+        }
+    };
+
+
+    const handleAddApplication = () => {
+        if (!chemIndex || !appTimestamp || !rate || !amountApplied || !locationCode) {
+            setError('Please fill in all application fields');
+            return;
+        }
+
+        const chemIndexNum = parseInt(chemIndex);
+        if (chemIndexNum < 0 || chemIndexNum >= chemicals.length) {
+            setError(`Chemical index must be between 0 and ${chemicals.length - 1}`);
+            return;
+        }
+
+        const newApplication: PesticideApplication = {
+            chem_used: chemicals[chemIndexNum].id,
+            app_timestamp: new Date(appTimestamp).toISOString(),
+            rate: rate,
+            amount_applied: parseFloat(amountApplied),
+            location_code: locationCode,
+        };
+
+        setApplications([...applications, newApplication]);
+        setChemIndex('');
+        setAppTimestamp('');
+        setRate('');
+        setAmountApplied('');
+        setLocationCode('');
+        setError(null);
+    };
+
+    const handleRemoveApplication = (index: number) => {
+        setApplications(applications.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -27,7 +84,7 @@ export default function CreateLawnFormPage() {
         setIsSubmitting(true);
 
         try {
-            const response = await formsClient.createLawnForm({
+            const requestData = {
                 first_name: firstName,
                 last_name: lastName,
                 street_number: streetNumber,
@@ -40,7 +97,13 @@ export default function CreateLawnFormPage() {
                 is_holiday: isHoliday,
                 lawn_area_sq_ft: parseInt(lawnAreaSqFt) || 0,
                 fert_only: fertOnly,
-            });
+                applications: applications,
+            };
+
+            console.log('Submitting lawn form with data:', requestData);
+            console.log('Applications array:', applications);
+
+            const response = await formsClient.createLawnForm(requestData);
 
             router.push(`/forms/lawn/${response.id}`);
         } catch (err) {
@@ -50,6 +113,21 @@ export default function CreateLawnFormPage() {
         }
     };
 
+    useEffect(() => {
+        fetchLawnChemicals();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-zinc-600 dark:text-zinc-400">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <header className="bg-white dark:bg-zinc-900 shadow">
@@ -57,10 +135,85 @@ export default function CreateLawnFormPage() {
                     <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                         Create Lawn Form
                     </h1>
+                    <button
+                        onClick={() => router.push('/dashboard')}
+                        className="mt-4 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                    >
+                        Back to Dashboard
+                    </button>
                 </div>
             </header>
 
-            <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+                <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                        Chemical List
+                    </h1>
+
+                    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+                                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Index
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Category
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Brand Name
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Chemical Name
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            EPA Reg No
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Recipe
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Unit
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
+                                    {chemicals.map((chem, index) => (
+                                        <tr key={chem.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                                                {index}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${chem.category === 'lawn'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                    }`}>
+                                                    {chem.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-50">
+                                                {chem.brand_name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-50">
+                                                {chem.chemical_name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                                {chem.epa_reg_no || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                                {chem.recipe || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                                {chem.unit || 'N/A'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
@@ -228,6 +381,130 @@ export default function CreateLawnFormPage() {
                                 />
                                 <span className="text-sm text-zinc-900 dark:text-zinc-50">Fertilizer Only</span>
                             </label>
+                        </div>
+
+                        <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4 mt-6">
+                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                                Pesticide Applications
+                            </h2>
+
+                            {applications.length > 0 && (
+                                <div className="mb-4 space-y-2">
+                                    {applications.map((app, index) => {
+                                        const chem = chemicals.find(c => c.id === app.chem_used);
+                                        const chemIdx = chemicals.findIndex(c => c.id === app.chem_used);
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="bg-zinc-50 dark:bg-zinc-800 p-3 rounded-lg flex justify-between items-start"
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                                                        Chemical [{chemIdx}]: {chem?.brand_name || 'Unknown'}
+                                                    </p>
+                                                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                        Timestamp: {new Date(app.app_timestamp).toLocaleString()} |
+                                                        Rate: {app.rate} |
+                                                        Amount: {app.amount_applied} |
+                                                        Location: {app.location_code}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveApplication(index)}
+                                                    className="ml-2 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            <div className="bg-zinc-50 dark:bg-zinc-800 p-4 rounded-lg space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label htmlFor="chemIndex" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
+                                            Chemical Index (from table above)
+                                        </label>
+                                        <input
+                                            id="chemIndex"
+                                            type="number"
+                                            value={chemIndex}
+                                            onChange={(e) => setChemIndex(e.target.value)}
+                                            min="0"
+                                            max={chemicals.length - 1}
+                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="appTimestamp" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
+                                            Application Date & Time
+                                        </label>
+                                        <input
+                                            id="appTimestamp"
+                                            type="datetime-local"
+                                            value={appTimestamp}
+                                            onChange={(e) => setAppTimestamp(e.target.value)}
+                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label htmlFor="rate" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
+                                            Rate
+                                        </label>
+                                        <input
+                                            id="rate"
+                                            type="text"
+                                            value={rate}
+                                            onChange={(e) => setRate(e.target.value)}
+                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                            placeholder="e.g., 2 oz/1000 sq ft"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="amountApplied" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
+                                            Amount Applied
+                                        </label>
+                                        <input
+                                            id="amountApplied"
+                                            type="number"
+                                            step="0.01"
+                                            value={amountApplied}
+                                            onChange={(e) => setAmountApplied(e.target.value)}
+                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="locationCode" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
+                                            Location Code
+                                        </label>
+                                        <input
+                                            id="locationCode"
+                                            type="text"
+                                            value={locationCode}
+                                            onChange={(e) => setLocationCode(e.target.value.slice(0, 2))}
+                                            maxLength={2}
+                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                            placeholder="FL"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddApplication}
+                                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                >
+                                    <span className="mr-2">+</span> Add Application
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex gap-4">

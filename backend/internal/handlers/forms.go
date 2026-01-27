@@ -4,11 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/forms"
 	"github.com/go-chi/chi/v5"
+	"github.com/shopspring/decimal"
 )
 
 // FormsHandler handles all form-related HTTP requests
@@ -46,6 +49,24 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 	// - Check required fields are not empty
 	// - Validate phone number format
 
+	// Convert applications from request to domain model
+	var applications []forms.PestApp
+	for _, appReq := range req.Applications {
+		appTime, err := time.Parse(time.RFC3339, appReq.AppTimestamp)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid application timestamp format: "+err.Error())
+			return
+		}
+
+		applications = append(applications, forms.PestApp{
+			ChemUsed:      appReq.ChemUsed,
+			AppTimestamp:  appTime,
+			Rate:          appReq.Rate,
+			AmountApplied: decimal.NewFromFloat(appReq.AmountApplied),
+			LocationCode:  appReq.LocationCode,
+		})
+	}
+
 	shrubFormInput := forms.CreateShrubFormInput{
 		CreatedBy:    userID,
 		FirstName:    req.FirstName,
@@ -59,6 +80,7 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 		CallBefore:   req.CallBefore,
 		IsHoliday:    req.IsHoliday,
 		FleaOnly:     req.FleaOnly,
+		Applications: applications,
 	}
 
 	shrubFormId, err := h.repo.CreateShrubForm(r.Context(), shrubFormInput)
@@ -80,10 +102,35 @@ func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Debug logging
+	fmt.Printf("Received lawn form request with %d applications\n", len(req.Applications))
+	for i, app := range req.Applications {
+		fmt.Printf("  App %d: ChemUsed=%d, Rate=%s, Amount=%.2f, Location=%s, Timestamp=%s\n",
+			i, app.ChemUsed, app.Rate, app.AmountApplied, app.LocationCode, app.AppTimestamp)
+	}
+
 	// TODO: Add validation
 	// - Check required fields are not empty
 	// - Validate phone number format
 	// - Validate lawn_area_sq_ft > 0
+
+	// Convert applications from request to domain model
+	var applications []forms.PestApp
+	for _, appReq := range req.Applications {
+		appTime, err := time.Parse(time.RFC3339, appReq.AppTimestamp)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid application timestamp format: "+err.Error())
+			return
+		}
+
+		applications = append(applications, forms.PestApp{
+			ChemUsed:      appReq.ChemUsed,
+			AppTimestamp:  appTime,
+			Rate:          appReq.Rate,
+			AmountApplied: decimal.NewFromFloat(appReq.AmountApplied),
+			LocationCode:  appReq.LocationCode,
+		})
+	}
 
 	lawnFormInput := forms.CreateLawnFormInput{
 		CreatedBy:    userID,
@@ -99,6 +146,7 @@ func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 		IsHoliday:    req.IsHoliday,
 		LawnAreaSqFt: req.LawnAreaSqFt,
 		FertOnly:     req.FertOnly,
+		Applications: applications,
 	}
 
 	lawnFormId, err := h.repo.CreateLawnForm(r.Context(), lawnFormInput)

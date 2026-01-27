@@ -36,6 +36,7 @@ type CreateShrubFormInput struct {
 	CallBefore   bool
 	IsHoliday    bool
 	FleaOnly     bool
+	Applications []PestApp
 }
 type CreateLawnFormInput struct {
 	CreatedBy    string
@@ -51,6 +52,7 @@ type CreateLawnFormInput struct {
 	IsHoliday    bool
 	LawnAreaSqFt int
 	FertOnly     bool
+	Applications []PestApp
 }
 
 // UpdateFormInput contains the fields that may be updated on an existing form.
@@ -146,6 +148,31 @@ func (r *FormsRepository) CreateShrubForm(
 		return "", fmt.Errorf("Failed to insert shrub form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
 	}
 
+	// Insert pesticide applications if any
+	for _, app := range shrubFormInput.Applications {
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO pesticide_applications (
+				form_id,
+				chem_used,
+				app_timestamp,
+				rate,
+				amount_applied,
+				location_code
+			)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`,
+			formID,
+			app.ChemUsed,
+			app.AppTimestamp,
+			app.Rate,
+			app.AmountApplied,
+			app.LocationCode,
+		)
+		if err != nil {
+			return "", fmt.Errorf("Failed to insert pesticide application for form %s %s: %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		return "", fmt.Errorf("Failed to commit transaction for inserting shrub form: %s %s, %w", shrubFormInput.FirstName, shrubFormInput.LastName, err)
 	}
@@ -218,6 +245,32 @@ func (r *FormsRepository) CreateLawnForm(
 	)
 	if err != nil {
 		return "", fmt.Errorf("Failed to insert lawn form: %s %s, %w", lawnFormInput.FirstName, lawnFormInput.LastName, err)
+	}
+
+	// Insert pesticide applications if any
+	for _, app := range lawnFormInput.Applications {
+		fmt.Printf("app: %v\n", app)
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO pesticide_applications (
+				form_id,
+				chem_used,
+				app_timestamp,
+				rate,
+				amount_applied,
+				location_code
+			)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`,
+			formID,
+			app.ChemUsed,
+			app.AppTimestamp,
+			app.Rate,
+			app.AmountApplied,
+			app.LocationCode,
+		)
+		if err != nil {
+			return "", fmt.Errorf("Failed to insert pesticide application for form %s %s: %w", lawnFormInput.FirstName, lawnFormInput.LastName, err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

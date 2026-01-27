@@ -148,24 +148,6 @@ export default function LawnFormDetailPage() {
                                     <span className="text-sm text-zinc-900 dark:text-zinc-50">Fertilizer Only</span>
                                 </div>
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Created At
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">
-                                    {new Date(form.created_at).toLocaleString()}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Updated At
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">
-                                    {new Date(form.updated_at).toLocaleString()}
-                                </p>
-                            </div>
                         </div>
                     )}
 

@@ -34,12 +34,7 @@ type PestApp struct {
 	AppTimestamp  time.Time
 	Rate          string
 	AmountApplied decimal.Decimal
-	LocationCode  LocationCode
-}
-
-type LocationCode struct {
-	x int
-	y int
+	LocationCode  string
 }
 
 type Note struct {

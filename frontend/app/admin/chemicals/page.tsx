@@ -334,6 +334,9 @@ export default function AdminChemicalsPage() {
                                 <thead className="bg-zinc-50 dark:bg-zinc-800">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                            Index
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                                             Category
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -359,6 +362,9 @@ export default function AdminChemicalsPage() {
                                 <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
                                     {chemicals.map((chem) => (
                                         <tr key={chem.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-50">
+                                                {chem.id}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${chem.category === 'lawn'
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'

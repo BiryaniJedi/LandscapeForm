@@ -2,35 +2,47 @@ package handlers
 
 import "time"
 
+// Pesticide Applications
+
+type PesticideApplicationRequest struct {
+	ChemUsed      int     `json:"chem_used"`
+	AppTimestamp  string  `json:"app_timestamp"`
+	Rate          string  `json:"rate"`
+	AmountApplied float64 `json:"amount_applied"`
+	LocationCode  string  `json:"location_code"`
+}
+
 // Forms
 
 type CreateShrubFormRequest struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	StreetNumber string `json:"street_number"`
-	StreetName   string `json:"street_name"`
-	Town         string `json:"town"`
-	ZipCode      string `json:"zip_code"`
-	HomePhone    string `json:"home_phone"`
-	OtherPhone   string `json:"other_phone"`
-	CallBefore   bool   `json:"call_before"`
-	IsHoliday    bool   `json:"is_holiday"`
-	FleaOnly     bool   `json:"flea_only"`
+	FirstName    string                         `json:"first_name"`
+	LastName     string                         `json:"last_name"`
+	StreetNumber string                         `json:"street_number"`
+	StreetName   string                         `json:"street_name"`
+	Town         string                         `json:"town"`
+	ZipCode      string                         `json:"zip_code"`
+	HomePhone    string                         `json:"home_phone"`
+	OtherPhone   string                         `json:"other_phone"`
+	CallBefore   bool                           `json:"call_before"`
+	IsHoliday    bool                           `json:"is_holiday"`
+	FleaOnly     bool                           `json:"flea_only"`
+	Applications []PesticideApplicationRequest `json:"applications,omitempty"`
 }
 
 type CreateLawnFormRequest struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	StreetNumber string `json:"street_number"`
-	StreetName   string `json:"street_name"`
-	Town         string `json:"town"`
-	ZipCode      string `json:"zip_code"`
-	HomePhone    string `json:"home_phone"`
-	OtherPhone   string `json:"other_phone"`
-	CallBefore   bool   `json:"call_before"`
-	IsHoliday    bool   `json:"is_holiday"`
-	LawnAreaSqFt int    `json:"lawn_area_sq_ft"`
-	FertOnly     bool   `json:"fert_only"`
+	FirstName    string                         `json:"first_name"`
+	LastName     string                         `json:"last_name"`
+	StreetNumber string                         `json:"street_number"`
+	StreetName   string                         `json:"street_name"`
+	Town         string                         `json:"town"`
+	ZipCode      string                         `json:"zip_code"`
+	HomePhone    string                         `json:"home_phone"`
+	OtherPhone   string                         `json:"other_phone"`
+	CallBefore   bool                           `json:"call_before"`
+	IsHoliday    bool                           `json:"is_holiday"`
+	LawnAreaSqFt int                            `json:"lawn_area_sq_ft"`
+	FertOnly     bool                           `json:"fert_only"`
+	Applications []PesticideApplicationRequest `json:"applications,omitempty"`
 }
 
 type UpdateShrubFormRequest struct {

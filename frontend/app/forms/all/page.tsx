@@ -11,6 +11,9 @@ export default function ListFormsAllUsersPage() {
     const [formviewList, setFormviewList] = useState<ListFormsResponse | null>(null);
     const [error, setError] = useState<Error | AuthError | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [deletingFormId, setDeletingFormId] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [formToDelete, setFormToDelete] = useState<FormViewResponse | null>(null);
 
     //query string params
     const [offset, setOffset] = useState<number>(0);
@@ -76,6 +79,47 @@ export default function ListFormsAllUsersPage() {
         setSortBy('created_at');
         setOrder('DESC');
         setOffset(0);
+    };
+
+    const handleDeleteClick = (form: FormViewResponse) => {
+        setFormToDelete(form);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteCancel = () => {
+        setFormToDelete(null);
+        setShowDeleteConfirm(false);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!formToDelete) return;
+
+        setDeletingFormId(formToDelete.id);
+        setShowDeleteConfirm(false);
+
+        try {
+            await formsClient.deleteForm(formToDelete.id);
+
+            // Refresh the forms list
+            const data = await formsClient.listFormsAllUsers({
+                offset: offset,
+                form_type: formType || null,
+                search_name: searchName || null,
+                sort_by: sortBy || null,
+                order: order || null,
+            });
+            setFormviewList(data);
+            setError(null);
+        } catch (err) {
+            if (err instanceof AuthError) {
+                setError(new AuthError((err as Error).message));
+            } else if (err instanceof Error) {
+                setError(new Error((err as Error).message));
+            }
+        } finally {
+            setDeletingFormId(null);
+            setFormToDelete(null);
+        }
     };
 
     if (isLoading) {
@@ -213,6 +257,13 @@ export default function ListFormsAllUsersPage() {
                             </div>
                         </div>
 
+                        {/* Error Display */}
+                        {error && !(error instanceof AuthError) && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                                <p className="text-red-800 dark:text-red-200">{error.message}</p>
+                            </div>
+                        )}
+
                         {/* Results Info */}
                         <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
                             <p>
@@ -225,7 +276,7 @@ export default function ListFormsAllUsersPage() {
                             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                 {formviewList.forms.map((formview: FormViewResponse) => (
                                     <div key={formview.id} className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
                                                     Name
@@ -263,6 +314,22 @@ export default function ListFormsAllUsersPage() {
                                                 </span>
                                             </div>
                                         </div>
+
+                                        <div className="flex gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                                            <button
+                                                onClick={() => router.push(`/forms/${formview.form_type}/${formview.id}`)}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                            >
+                                                View Details
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(formview)}
+                                                disabled={deletingFormId === formview.id}
+                                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                            >
+                                                {deletingFormId === formview.id ? 'Deleting...' : 'Delete'}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -289,6 +356,35 @@ export default function ListFormsAllUsersPage() {
                     </button>
                 </div>
             </main>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && formToDelete && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full p-6">
+                        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-4">
+                            Confirm Deletion
+                        </h2>
+                        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                            Are you sure you want to delete the form for <strong>{formToDelete.first_name} {formToDelete.last_name}</strong>?
+                            This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={handleDeleteCancel}
+                                className="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteConfirm}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Delete Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
 
     );

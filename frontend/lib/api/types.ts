@@ -39,6 +39,23 @@ export interface AuthResponse {
 
 
 // ============================================================================
+// Pesticide Application Types
+// ============================================================================
+
+export interface PesticideApplication {
+    chem_used: number;
+    app_timestamp: string;
+    rate: string;
+    amount_applied: number;
+    location_code: string;
+}
+
+export interface PesticideApplicationResponse extends PesticideApplication {
+    id: number;
+    form_id: string;
+}
+
+// ============================================================================
 // Forms API Request Types (match backend/internal/handlers/types.go)
 // ============================================================================
 
@@ -54,6 +71,7 @@ export interface CreateShrubFormRequest {
     call_before: boolean;
     is_holiday: boolean;
     flea_only: boolean;
+    applications?: PesticideApplication[];
 }
 
 export interface CreateLawnFormRequest {
@@ -69,6 +87,7 @@ export interface CreateLawnFormRequest {
     is_holiday: boolean;
     lawn_area_sq_ft: number;
     fert_only: boolean;
+    applications?: PesticideApplication[];
 }
 
 export interface UpdateShrubFormRequest {
