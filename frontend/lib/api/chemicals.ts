@@ -25,7 +25,7 @@ export class ChemicalsClient extends ApiClient {
         if (category) params.append('category', category)
 
         const queryString = params.toString()
-        const url = queryString ? `/admin/chemicals?${queryString}` : '/admin/chemicals'
+        const url = queryString ? `/chemicals?${queryString}` : '/chemicals'
 
         return await this.request<ListChemicalsResponse>(url, {
             method: 'GET',

@@ -56,8 +56,9 @@ export default function SettingsPage() {
             const updateData: any = {
                 first_name: firstName,
                 last_name: lastName,
+                date_of_birth: new Date(dateOfBirth).toISOString(),
                 username: username,
-                date_of_birth: dateOfBirth,
+                password: '',
             };
 
             if (newPassword) {

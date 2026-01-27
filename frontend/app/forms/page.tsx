@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
-import { ListFormsResponse, FormViewResponse, AuthError } from '@/lib/api/types';
+import { chemicalsClient } from '@/lib/api/chemicals';
+import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
 
 export default function ListFormsPage() {
     const router = useRouter();
@@ -11,6 +12,9 @@ export default function ListFormsPage() {
     const [formviewList, setFormviewList] = useState<ListFormsResponse | null>(null);
     const [error, setError] = useState<Error | AuthError | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [deletingFormId, setDeletingFormId] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [formToDelete, setFormToDelete] = useState<FormViewResponse | null>(null);
 
     //query string params
     const [limit, setLimit] = useState<number>(10);
@@ -28,6 +32,25 @@ export default function ListFormsPage() {
     const [order, setOrder] = useState<string>('DESC');
     const [orderInput, setOrderInput] = useState<string>('DESC');
 
+    // Chemical filtering
+    const [chemicals, setChemicals] = useState<Chemical[]>([]);
+    const [selectedChemicalIds, setSelectedChemicalIds] = useState<number[]>([]);
+    const [selectedChemicalDropdown, setSelectedChemicalDropdown] = useState<string>('');
+    const [chemicalsFilter, setChemicalsFilter] = useState<number[]>([]);
+    const [chemicalsFilterInput, setChemicalsFilterInput] = useState<number[]>([]);
+
+    useEffect(() => {
+        const fetchChemicals = async () => {
+            try {
+                const data = await chemicalsClient.listChemicals();
+                setChemicals(data.chemicals);
+            } catch (err) {
+                console.error('Failed to load chemicals:', err);
+            }
+        };
+        fetchChemicals();
+    }, []);
+
     useEffect(() => {
         const fetchForms = async () => {
             try {
@@ -39,6 +62,7 @@ export default function ListFormsPage() {
                         search_name: searchName || null,
                         sort_by: sortBy || null,
                         order: order || null,
+                        chemical_ids: selectedChemicalIds.length > 0 ? selectedChemicalIds : null,
                     }
                 );
                 setFormviewList(data);
@@ -58,7 +82,7 @@ export default function ListFormsPage() {
         };
 
         fetchForms();
-    }, [limit, offset, formType, searchName, sortBy, order]);
+    }, [limit, offset, formType, searchName, sortBy, order, selectedChemicalIds]);
 
     const handleApplyFilters = () => {
         setSearchName(searchNameInput);
@@ -77,7 +101,65 @@ export default function ListFormsPage() {
         setFormType('');
         setSortBy('created_at');
         setOrder('DESC');
+        setSelectedChemicalIds([]);
+        setSelectedChemicalDropdown('');
         setOffset(0);
+    };
+
+    const handleAddChemical = () => {
+        if (selectedChemicalDropdown) {
+            const chemId = parseInt(selectedChemicalDropdown);
+            if (!selectedChemicalIds.includes(chemId)) {
+                setSelectedChemicalIds([...selectedChemicalIds, chemId]);
+            }
+            setSelectedChemicalDropdown('');
+        }
+    };
+
+    const handleRemoveChemical = (chemId: number) => {
+        setSelectedChemicalIds(selectedChemicalIds.filter(id => id !== chemId));
+    };
+
+    const handleDeleteClick = (form: FormViewResponse) => {
+        setFormToDelete(form);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteCancel = () => {
+        setFormToDelete(null);
+        setShowDeleteConfirm(false);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!formToDelete) return;
+
+        setDeletingFormId(formToDelete.id);
+        setShowDeleteConfirm(false);
+
+        try {
+            await formsClient.deleteForm(formToDelete.id);
+
+            // Refresh the forms list
+            const data = await formsClient.listFormsAllUsers({
+                offset: offset,
+                form_type: formType || null,
+                search_name: searchName || null,
+                sort_by: sortBy || null,
+                order: order || null,
+                chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
+            });
+            setFormviewList(data);
+            setError(null);
+        } catch (err) {
+            if (err instanceof AuthError) {
+                setError(new AuthError((err as Error).message));
+            } else if (err instanceof Error) {
+                setError(new Error((err as Error).message));
+            }
+        } finally {
+            setDeletingFormId(null);
+            setFormToDelete(null);
+        }
     };
 
     if (isLoading) {
@@ -206,6 +288,56 @@ export default function ListFormsPage() {
                                 </div>
                             </div>
 
+                            {/* Chemical Filter */}
+                            <div className="mb-4">
+                                <label htmlFor="chemicalFilter" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Filter by Chemical
+                                </label>
+                                <div className="flex gap-2">
+                                    <select
+                                        id="chemicalFilter"
+                                        value={selectedChemicalDropdown}
+                                        onChange={(e) => setSelectedChemicalDropdown(e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Select a chemical...</option>
+                                        {chemicals.map(chem => (
+                                            <option key={chem.id} value={chem.id}>
+                                                {chem.brand_name} - {chem.chemical_name} ({chem.category})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={handleAddChemical}
+                                        disabled={!selectedChemicalDropdown}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+
+                                {/* Selected Chemicals */}
+                                {selectedChemicalIds.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {selectedChemicalIds.map(chemId => {
+                                            const chem = chemicals.find(c => c.id === chemId);
+                                            if (!chem) return null;
+                                            return (
+                                                <div key={chemId} className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                                                    <span>{chem.brand_name} - {chem.chemical_name}</span>
+                                                    <button
+                                                        onClick={() => handleRemoveChemical(chemId)}
+                                                        className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-3">
                                 <button
@@ -236,43 +368,60 @@ export default function ListFormsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                 {formviewList.forms.map((formview: FormViewResponse) => (
                                     <div key={formview.id} className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                    Name
-                                                </label>
-                                                <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name} {formview.last_name}</p>
-                                            </div>
+                                        <div className="flex justify-between items-start">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                        Name
+                                                    </label>
+                                                    <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name} {formview.last_name}</p>
+                                                </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                    Address
-                                                </label>
-                                                <p className="text-zinc-900 dark:text-zinc-50">
-                                                    {formview.street_number} {formview.street_name}
-                                                </p>
-                                            </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                        Address
+                                                    </label>
+                                                    <p className="text-zinc-900 dark:text-zinc-50">
+                                                        {formview.street_number} {formview.street_name}
+                                                    </p>
+                                                </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                    Location
-                                                </label>
-                                                <p className="text-zinc-900 dark:text-zinc-50">
-                                                    {formview.town}, {formview.zip_code}
-                                                </p>
-                                            </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                        Location
+                                                    </label>
+                                                    <p className="text-zinc-900 dark:text-zinc-50">
+                                                        {formview.town}, {formview.zip_code}
+                                                    </p>
+                                                </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                    Form Type
-                                                </label>
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formview.form_type === 'shrub'
-                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                    }`}>
-                                                    {formview.form_type}
-                                                </span>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                        Form Type
+                                                    </label>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formview.form_type === 'shrub'
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                        }`}>
+                                                        {formview.form_type}
+                                                    </span>
+                                                </div>
                                             </div>
+                                        </div>
+                                        <div className="flex gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                                            <button
+                                                onClick={() => router.push(`/forms/${formview.form_type}/${formview.id}`)}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                            >
+                                                View Details
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(formview)}
+                                                disabled={deletingFormId === formview.id}
+                                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                            >
+                                                {deletingFormId === formview.id ? 'Deleting...' : 'Delete'}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -288,6 +437,34 @@ export default function ListFormsPage() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                )}
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && formToDelete && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full p-6">
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-4">
+                                Confirm Deletion
+                            </h2>
+                            <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                                Are you sure you want to delete the form for <strong>{formToDelete.first_name} {formToDelete.last_name}</strong>?
+                                This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={handleDeleteCancel}
+                                    className="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteConfirm}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                    Delete Form
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>

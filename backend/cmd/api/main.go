@@ -99,19 +99,18 @@ func setupRouter(formsHandler *handlers.FormsHandler, usersHandler *handlers.Use
 
 		r.Route("/admin/forms", func(r chi.Router) {
 			r.Use(middleware.AdminOnly)
-
 			r.Get("/", formsHandler.ListAllForms)
 		})
 
 		// Chemicals routes (public for listing by category, admin for management)
 		r.Route("/chemicals", func(r chi.Router) {
 			r.Get("/category/{category}", chemicalsHandler.ListChemicalsByCategory)
+			r.Get("/", chemicalsHandler.ListChemicals)
 		})
 
 		r.Route("/admin/chemicals", func(r chi.Router) {
 			r.Use(middleware.AdminOnly)
 
-			r.Get("/", chemicalsHandler.ListChemicals)
 			r.Post("/", chemicalsHandler.CreateChemical)
 			r.Put("/{id}", chemicalsHandler.UpdateChemical)
 			r.Delete("/{id}", chemicalsHandler.DeleteChemical)
