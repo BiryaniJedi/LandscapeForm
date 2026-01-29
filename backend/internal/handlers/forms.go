@@ -12,6 +12,7 @@ import (
 	"github.com/BiryaniJedi/LandscapeForm-backend/internal/forms"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
+	"regexp"
 )
 
 // FormsHandler handles all form-related HTTP requests
@@ -240,6 +241,36 @@ func parseListFormsOptions(r *http.Request) forms.ListFormsOptions {
 			if chemID, err := strconv.Atoi(strings.TrimSpace(chemStr)); err == nil {
 				opts.ChemicalIDs = append(opts.ChemicalIDs, chemID)
 			}
+		}
+	}
+
+	// Date filtering for application dates
+	if dateLowStr := r.URL.Query().Get("date_low"); dateLowStr != "" {
+		if dateLow, err := time.Parse(time.RFC3339, dateLowStr); err == nil {
+			opts.DateLow = dateLow
+		}
+	}
+
+	if dateHighStr := r.URL.Query().Get("date_high"); dateHighStr != "" {
+		if dateHigh, err := time.Parse(time.RFC3339, dateHighStr); err == nil {
+			opts.DateHigh = dateHigh
+		}
+	}
+
+	if zipCodeStr := r.URL.Query().Get("zip_code"); zipCodeStr != "" {
+		// Validate zip code format: 5 digits or 5 digits-4 digits (e.g., 12345 or 12345-6789)
+		if match, _ := regexp.MatchString(`^\d{5}(-\d{4})?$`, zipCodeStr); match {
+			opts.ZipCode = zipCodeStr
+		}
+	}
+
+	if jewishHolidayString := r.URL.Query().Get("jewish_holiday"); jewishHolidayString != "" {
+		switch jewishHolidayString {
+		case "yes":
+			opts.JewishHoliday = "yes"
+		case "no":
+			opts.JewishHoliday = "no"
+		default:
 		}
 	}
 

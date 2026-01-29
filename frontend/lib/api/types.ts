@@ -139,6 +139,10 @@ export interface ListFormsParams {
     sort_by?: string | null;
     order?: string | null;
     chemical_ids?: number[] | null;
+    zip_code?: string | null;
+    jewish_holiday?: string | null;
+    date_low?: string | null;
+    date_high?: string | null;
 }
 
 // ============================================================================

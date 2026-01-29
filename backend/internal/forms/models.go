@@ -24,6 +24,10 @@ type Form struct {
 	OtherPhone   string
 	CallBefore   bool
 	IsHoliday    bool
+
+	FirstAppDate *time.Time
+	LastAppDate  *time.Time
+
 	AppTimes     []PestApp
 	Notes        []Note
 }

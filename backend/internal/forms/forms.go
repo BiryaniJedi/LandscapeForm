@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // FormsRepository provides database access for form records.
@@ -282,17 +283,21 @@ func (r *FormsRepository) CreateLawnForm(
 // ListFormsOptions contains optional filtering and pagination parameters
 type ListFormsOptions struct {
 	// Pagination
-	Limit  int // Max number of results (0 = no limit)
-	Offset int // Number of results to skip
+	Limit  int
+	Offset int
 
 	// Filtering
-	FormType    string // Filter by form type: "shrub" or "lawn" (empty = all)
-	SearchName  string // Search in first_name or last_name (partial match)
-	ChemicalIDs []int  // Filter by chemicals used in applications (empty = no filter)
+	FormType      string
+	SearchName    string
+	ChemicalIDs   []int
+	JewishHoliday string
+	DateLow       time.Time
+	DateHigh      time.Time
+	ZipCode       string
 
 	// Sorting
-	SortBy string // "first_name", "last_name", or "created_at" (defaults to "created_at")
-	Order  string // "ASC" or "DESC" (defaults to "DESC")
+	SortBy string
+	Order  string
 }
 
 // ListFormsByUserId returns all forms owned by the given user with pagination and filtering.
@@ -305,10 +310,12 @@ func (r *FormsRepository) ListFormsByUserId(
 ) ([]*FormView, error) {
 
 	allowedSorts := map[string]string{
-		"first_name": "f.first_name",
-		"last_name":  "f.last_name",
-		"created_at": "f.created_at",
+		"first_name":     "f.first_name",
+		"last_name":      "f.last_name",
+		"first_app_date": "fad.first_app_date",
 	}
+
+	var sortColumn string
 
 	sortColumn, ok := allowedSorts[opts.SortBy]
 	if !ok {
@@ -320,26 +327,29 @@ func (r *FormsRepository) ListFormsByUserId(
 		order = "DESC"
 	}
 
-	// Build WHERE clause
+	// Add NULL handling for date sorting
+	orderClause := fmt.Sprintf("%s %s", sortColumn, order)
+	if sortColumn == "fad.first_app_date" {
+		// Put forms without applications at the end regardless of sort order
+		orderClause = fmt.Sprintf("%s %s NULLS LAST", sortColumn, order)
+	}
+
 	whereConditions := []string{"f.created_by = $1"}
 	args := []any{userID}
 	argIndex := 2
 
-	// Add form type filter
 	if opts.FormType != "" {
 		whereConditions = append(whereConditions, fmt.Sprintf("f.form_type = $%d", argIndex))
 		args = append(args, opts.FormType)
 		argIndex++
 	}
 
-	// Add name search filter
 	if opts.SearchName != "" {
 		whereConditions = append(whereConditions, fmt.Sprintf("(f.first_name ILIKE $%d OR f.last_name ILIKE $%d)", argIndex, argIndex))
 		args = append(args, "%"+opts.SearchName+"%")
 		argIndex++
 	}
 
-	// Add chemical filter - find forms that have applications using any of the specified chemicals
 	if len(opts.ChemicalIDs) > 0 {
 		placeholders := make([]string, len(opts.ChemicalIDs))
 		for i, chemID := range opts.ChemicalIDs {
@@ -353,10 +363,50 @@ func (r *FormsRepository) ListFormsByUserId(
 		))
 	}
 
+	// Add date filter for first application date
+	if !opts.DateLow.IsZero() {
+		whereConditions = append(whereConditions, fmt.Sprintf("fad.first_app_date >= $%d", argIndex))
+		args = append(args, opts.DateLow)
+		argIndex++
+	}
+
+	// Add date filter for last application date
+	if !opts.DateHigh.IsZero() {
+		whereConditions = append(whereConditions, fmt.Sprintf("fad.last_app_date <= $%d", argIndex))
+		args = append(args, opts.DateHigh)
+		argIndex++
+	}
+
+	// Add zip code filter
+	if opts.ZipCode != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("f.zip_code = $%d", argIndex))
+		args = append(args, opts.ZipCode)
+		argIndex++
+	}
+
+	// Add Jewish holiday filter
+	if opts.JewishHoliday != "" {
+		switch opts.JewishHoliday {
+		case "yes":
+			whereConditions = append(whereConditions, "f.is_holiday = true")
+		case "no":
+			whereConditions = append(whereConditions, "f.is_holiday = false")
+		}
+	}
+
 	whereClause := strings.Join(whereConditions, " AND ")
 
 	// Build query with pagination
+	// Use a CTE to compute first and last application dates per form
 	query := fmt.Sprintf(`
+		WITH form_app_dates AS (
+			SELECT
+				form_id,
+				MIN(app_timestamp) as first_app_date,
+				MAX(app_timestamp) as last_app_date
+			FROM pesticide_applications
+			GROUP BY form_id
+		)
 		SELECT
 			f.id,
 			f.created_by,
@@ -375,13 +425,16 @@ func (r *FormsRepository) ListFormsByUserId(
 			f.is_holiday,
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
-			lf.fert_only
+			lf.fert_only,
+			fad.first_app_date,
+			fad.last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
+		LEFT JOIN form_app_dates fad ON f.id = fad.form_id
 		WHERE %s
-		ORDER BY %s %s
-	`, whereClause, sortColumn, order)
+		ORDER BY %s
+	`, whereClause, orderClause)
 
 	// Add pagination
 	if opts.Limit > 0 {
@@ -408,6 +461,11 @@ func (r *FormsRepository) ListFormsByUserId(
 			lawn  lawnRow
 		)
 
+		var (
+			firstAppDate sql.NullTime
+			lastAppDate  sql.NullTime
+		)
+
 		err := rows.Scan(
 			&form.ID,
 			&form.CreatedBy,
@@ -427,9 +485,19 @@ func (r *FormsRepository) ListFormsByUserId(
 			&shrub.FleaOnly,
 			&lawn.LawnAreaSqFt,
 			&lawn.FertOnly,
+			&firstAppDate,
+			&lastAppDate,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
+		}
+
+		// Assign application dates if valid
+		if firstAppDate.Valid {
+			form.FirstAppDate = &firstAppDate.Time
+		}
+		if lastAppDate.Valid {
+			form.LastAppDate = &lastAppDate.Time
 		}
 
 		var view *FormView
@@ -479,9 +547,10 @@ func (r *FormsRepository) ListAllForms(
 ) ([]*FormView, error) {
 
 	allowedSorts := map[string]string{
-		"first_name": "f.first_name",
-		"last_name":  "f.last_name",
-		"created_at": "f.created_at",
+		"first_name":     "f.first_name",
+		"last_name":      "f.last_name",
+		"created_at":     "f.created_at",
+		"first_app_date": "fad.first_app_date",
 	}
 
 	sortColumn, ok := allowedSorts[opts.SortBy]
@@ -494,9 +563,16 @@ func (r *FormsRepository) ListAllForms(
 		order = "DESC"
 	}
 
+	// Add NULL handling for date sorting
+	orderClause := fmt.Sprintf("%s %s", sortColumn, order)
+	if sortColumn == "fad.first_app_date" {
+		// Put forms without applications at the end regardless of sort order
+		orderClause = fmt.Sprintf("%s %s NULLS LAST", sortColumn, order)
+	}
+
 	// Build WHERE clause
 	whereConditions := []string{}
-	args := []interface{}{}
+	args := []any{}
 	argIndex := 1
 
 	// Add form type filter
@@ -527,13 +603,53 @@ func (r *FormsRepository) ListAllForms(
 		))
 	}
 
+	// Add date filter for first application date
+	if !opts.DateLow.IsZero() {
+		whereConditions = append(whereConditions, fmt.Sprintf("fad.first_app_date >= $%d", argIndex))
+		args = append(args, opts.DateLow)
+		argIndex++
+	}
+
+	// Add date filter for last application date
+	if !opts.DateHigh.IsZero() {
+		whereConditions = append(whereConditions, fmt.Sprintf("fad.last_app_date <= $%d", argIndex))
+		args = append(args, opts.DateHigh)
+		argIndex++
+	}
+
+	// Add zip code filter
+	if opts.ZipCode != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("f.zip_code = $%d", argIndex))
+		args = append(args, opts.ZipCode)
+		argIndex++
+	}
+
+	// Add Jewish holiday filter
+	if opts.JewishHoliday != "" {
+		switch opts.JewishHoliday {
+		case "yes":
+			whereConditions = append(whereConditions, "f.is_holiday = true")
+		case "no":
+			whereConditions = append(whereConditions, "f.is_holiday = false")
+		}
+	}
+
 	whereClause := ""
 	if len(whereConditions) > 0 {
 		whereClause = "WHERE " + strings.Join(whereConditions, " AND ")
 	}
 
 	// Build query with pagination
+	// Use a CTE to compute first and last application dates per form
 	query := fmt.Sprintf(`
+		WITH form_app_dates AS (
+			SELECT
+				form_id,
+				MIN(app_timestamp) as first_app_date,
+				MAX(app_timestamp) as last_app_date
+			FROM pesticide_applications
+			GROUP BY form_id
+		)
 		SELECT
 			f.id,
 			f.created_by,
@@ -552,13 +668,16 @@ func (r *FormsRepository) ListAllForms(
 			f.is_holiday,
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
-			lf.fert_only
+			lf.fert_only,
+			fad.first_app_date,
+			fad.last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
+		LEFT JOIN form_app_dates fad ON f.id = fad.form_id
 		%s
-		ORDER BY %s %s
-	`, whereClause, sortColumn, order)
+		ORDER BY %s
+	`, whereClause, orderClause)
 
 	// Add pagination
 	if opts.Limit > 0 {
@@ -585,6 +704,11 @@ func (r *FormsRepository) ListAllForms(
 			lawn  lawnRow
 		)
 
+		var (
+			firstAppDate sql.NullTime
+			lastAppDate  sql.NullTime
+		)
+
 		err := rows.Scan(
 			&form.ID,
 			&form.CreatedBy,
@@ -604,9 +728,19 @@ func (r *FormsRepository) ListAllForms(
 			&shrub.FleaOnly,
 			&lawn.LawnAreaSqFt,
 			&lawn.FertOnly,
+			&firstAppDate,
+			&lastAppDate,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
+		}
+
+		// Assign application dates if valid
+		if firstAppDate.Valid {
+			form.FirstAppDate = &firstAppDate.Time
+		}
+		if lastAppDate.Valid {
+			form.LastAppDate = &lastAppDate.Time
 		}
 
 		var view *FormView
@@ -656,6 +790,15 @@ func (r *FormsRepository) GetFormViewById(
 ) (*FormView, error) {
 
 	query := `
+		WITH form_app_dates AS (
+			SELECT
+				form_id,
+				MIN(app_timestamp) as first_app_date,
+				MAX(app_timestamp) as last_app_date
+			FROM pesticide_applications
+			WHERE form_id = $1
+			GROUP BY form_id
+		)
 		SELECT
 			f.id,
 			f.created_by,
@@ -674,18 +817,23 @@ func (r *FormsRepository) GetFormViewById(
 			f.is_holiday,
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
-			lf.fert_only
+			lf.fert_only,
+			fad.first_app_date,
+			fad.last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
+		LEFT JOIN form_app_dates fad ON f.id = fad.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
 
 	var (
-		form  Form
-		shrub shrubRow
-		lawn  lawnRow
+		form         Form
+		shrub        shrubRow
+		lawn         lawnRow
+		firstAppDate sql.NullTime
+		lastAppDate  sql.NullTime
 	)
 
 	err := r.db.QueryRowContext(ctx, query, formID, userID).Scan(
@@ -707,10 +855,20 @@ func (r *FormsRepository) GetFormViewById(
 		&shrub.FleaOnly,
 		&lawn.LawnAreaSqFt,
 		&lawn.FertOnly,
+		&firstAppDate,
+		&lastAppDate,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
 		return nil, err
+	}
+
+	// Assign application dates if valid
+	if firstAppDate.Valid {
+		form.FirstAppDate = &firstAppDate.Time
+	}
+	if lastAppDate.Valid {
+		form.LastAppDate = &lastAppDate.Time
 	}
 
 	var view *FormView

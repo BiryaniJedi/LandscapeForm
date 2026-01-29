@@ -34,6 +34,18 @@ export default function ListFormsAllUsersPage() {
     const [order, setOrder] = useState<string>('DESC');
     const [orderInput, setOrderInput] = useState<string>('DESC');
 
+    const [dateLow, setDateLow] = useState<string>('');
+    const [dateLowInput, setDateLowInput] = useState<string>('');
+
+    const [dateHigh, setDateHigh] = useState<string>('');
+    const [dateHighInput, setDateHighInput] = useState<string>('');
+
+    const [zipCode, setZipCode] = useState<string>('');
+    const [zipCodeInput, setZipCodeInput] = useState<string>('');
+
+    const [jewishHoliday, setJewishHoliday] = useState<string>('');
+    const [jewishHolidayInput, setJewishHolidayInput] = useState<string>('');
+
     const [chemicalsFilter, setChemicalsFilter] = useState<number[]>([]);
     const [chemicalsFilterInput, setChemicalsFilterInput] = useState<number[]>([]);
 
@@ -59,6 +71,10 @@ export default function ListFormsAllUsersPage() {
                     search_name: searchName || null,
                     sort_by: sortBy || null,
                     order: order || null,
+                    date_low: dateLow ? new Date(dateLow).toISOString() : null,
+                    date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
+                    zip_code: zipCode || null,
+                    jewish_holiday: jewishHoliday || null,
                     chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
                 });
                 setFormviewList(data);
@@ -78,7 +94,7 @@ export default function ListFormsAllUsersPage() {
         };
 
         fetchForms();
-    }, [offset, formType, searchName, sortBy, order, chemicalsFilter]);
+    }, [offset, formType, searchName, sortBy, order, dateLow, dateHigh, zipCode, jewishHoliday, chemicalsFilter]);
 
     const handleAddChemical = () => {
         if (selectedChemicalDropdown && !chemicalsFilterInput.includes(parseInt(selectedChemicalDropdown))) {
@@ -96,6 +112,10 @@ export default function ListFormsAllUsersPage() {
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
+        setDateLow(dateLowInput);
+        setDateHigh(dateHighInput);
+        setZipCode(zipCodeInput);
+        setJewishHoliday(jewishHolidayInput);
         setChemicalsFilter(chemicalsFilterInput);
         setOffset(0);
     };
@@ -105,11 +125,19 @@ export default function ListFormsAllUsersPage() {
         setFormTypeInput('');
         setSortByInput('created_at');
         setOrderInput('DESC');
+        setDateLowInput('');
+        setDateHighInput('');
+        setZipCodeInput('');
+        setJewishHolidayInput('');
         setChemicalsFilterInput([]);
         setSearchName('');
         setFormType('');
         setSortBy('created_at');
         setOrder('DESC');
+        setDateLow('');
+        setDateHigh('');
+        setZipCode('');
+        setJewishHoliday('');
         setChemicalsFilter([]);
         setOffset(0);
     };
@@ -140,6 +168,10 @@ export default function ListFormsAllUsersPage() {
                 search_name: searchName || null,
                 sort_by: sortBy || null,
                 order: order || null,
+                date_low: dateLow ? new Date(dateLow).toISOString() : null,
+                date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
+                zip_code: zipCode || null,
+                jewish_holiday: jewishHoliday || null,
                 chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
             });
             setFormviewList(data);
@@ -262,6 +294,7 @@ export default function ListFormsAllUsersPage() {
                                         <option value="created_at">Date Created</option>
                                         <option value="first_name">First Name</option>
                                         <option value="last_name">Last Name</option>
+                                        <option value="first_app_date">First Application Date</option>
                                     </select>
                                 </div>
 
@@ -333,6 +366,69 @@ export default function ListFormsAllUsersPage() {
                                             })}
                                         </div>
                                     )}
+                            </div>
+
+                            {/* Additional Filters - Second Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                                {/* Date Low */}
+                                <div>
+                                    <label htmlFor="dateLowInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Minimum First Application Date
+                                    </label>
+                                    <input
+                                        id="dateLowInput"
+                                        type="datetime-local"
+                                        value={dateLowInput}
+                                        onChange={(e) => setDateLowInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                {/* Date High */}
+                                <div>
+                                    <label htmlFor="dateHighInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Maximum Final Application Date
+                                    </label>
+                                    <input
+                                        id="dateHighInput"
+                                        type="datetime-local"
+                                        value={dateHighInput}
+                                        onChange={(e) => setDateHighInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                {/* Zip Code */}
+                                <div>
+                                    <label htmlFor="zipCodeInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Zip Code
+                                    </label>
+                                    <input
+                                        id="zipCodeInput"
+                                        type="text"
+                                        value={zipCodeInput}
+                                        onChange={(e) => setZipCodeInput(e.target.value)}
+                                        placeholder="12345 or 12345-6789"
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                {/* Jewish Holiday */}
+                                <div>
+                                    <label htmlFor="jewishHolidayInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Jewish Holiday
+                                    </label>
+                                    <select
+                                        id="jewishHolidayInput"
+                                        value={jewishHolidayInput}
+                                        onChange={(e) => setJewishHolidayInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Either</option>
+                                        <option value="yes">True</option>
+                                        <option value="no">False</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Action Buttons */}

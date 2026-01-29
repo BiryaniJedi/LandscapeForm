@@ -27,6 +27,8 @@ export default function CreateShrubFormPage() {
     const [applications, setApplications] = useState<PesticideApplication[]>([]);
     const [chemIndex, setChemIndex] = useState('');
     const [appTimestamp, setAppTimestamp] = useState('');
+    const [rateAmt, setRateAmt] = useState('');
+    const [rateSqFt, setRateSqFt] = useState('');
     const [rate, setRate] = useState('');
     const [amountApplied, setAmountApplied] = useState('');
     const [locationCode, setLocationCode] = useState('');
@@ -44,7 +46,7 @@ export default function CreateShrubFormPage() {
     };
 
     const handleAddApplication = () => {
-        if (!chemIndex || !appTimestamp || !rate || !amountApplied || !locationCode) {
+        if (!chemIndex || !appTimestamp || !rateAmt || !rateSqFt || !amountApplied || !locationCode) {
             setError('Please fill in all application fields');
             return;
         }
@@ -52,6 +54,17 @@ export default function CreateShrubFormPage() {
         const chemIndexNum = parseInt(chemIndex);
         if (chemIndexNum < 0 || chemIndexNum >= chemicals.length) {
             setError(`Chemical index must be between 0 and ${chemicals.length - 1}`);
+            return;
+        }
+
+        const rateAmtNum = parseInt(rateAmt);
+        const rateSqFtNum = parseInt(rateSqFt);
+        if (rateAmtNum < 0) {
+            setError(`Rate Amount in units must be greater than 0`);
+            return;
+        }
+        if (rateSqFtNum < 0) {
+            setError(`Rate Amount of Square Feet must be greater than 0`);
             return;
         }
 
@@ -66,6 +79,8 @@ export default function CreateShrubFormPage() {
         setApplications([...applications, newApplication]);
         setChemIndex('');
         setAppTimestamp('');
+        setRateAmt('');
+        setRateSqFt('');
         setRate('');
         setAmountApplied('');
         setLocationCode('');
@@ -80,6 +95,12 @@ export default function CreateShrubFormPage() {
         e.preventDefault();
         setError(null);
         setIsSubmitting(true);
+
+        if (applications.length === 0) {
+            setError('At least one pesticide application is required');
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
             const response = await formsClient.createShrubForm({
@@ -108,6 +129,14 @@ export default function CreateShrubFormPage() {
     useEffect(() => {
         fetchShrubChemicals();
     }, []);
+
+    useEffect(() => {
+        if (rateAmt && rateSqFt) {
+            setRate(`${rateAmt} units/${rateSqFt} sq ft`);
+        } else {
+            setRate('');
+        }
+    }, [rateAmt, rateSqFt]);
 
     if (isLoading) {
         return (
@@ -354,7 +383,7 @@ export default function CreateShrubFormPage() {
                                     onChange={(e) => setIsHoliday(e.target.checked)}
                                     className="mr-2"
                                 />
-                                <span className="text-sm text-zinc-900 dark:text-zinc-50">Holiday Property</span>
+                                <span className="text-sm text-zinc-900 dark:text-zinc-50">Jewish Holiday</span>
                             </label>
 
                             <label className="flex items-center">
@@ -443,14 +472,28 @@ export default function CreateShrubFormPage() {
                                         <label htmlFor="rate" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">
                                             Rate
                                         </label>
-                                        <input
-                                            id="rate"
-                                            type="text"
-                                            value={rate}
-                                            onChange={(e) => setRate(e.target.value)}
-                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
-                                            placeholder="e.g., 2 oz/1000 sq ft"
-                                        />
+                                        <div className="flex">
+                                            <input
+                                                id="rateUnit"
+                                                type="number"
+                                                value={rateAmt}
+                                                onChange={(e) => setRateAmt(e.target.value)}
+                                                className="w-1/2 px-3 py-2 mr-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                                placeholder=""
+                                            />
+                                            <p> units <br /> per </p>
+                                        </div>
+                                        <div className="flex">
+                                            <input
+                                                id="rateSqFt"
+                                                type="number"
+                                                value={rateSqFt}
+                                                onChange={(e) => setRateSqFt(e.target.value)}
+                                                className="w-1/2 px-3 py-2 mr-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                                                placeholder=""
+                                            />
+                                            <p> Sq Ft </p>
+                                        </div>
                                     </div>
                                     <div>
                                         <label htmlFor="amountApplied" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50 mb-1">

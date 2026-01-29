@@ -32,6 +32,18 @@ export default function ListFormsPage() {
     const [order, setOrder] = useState<string>('DESC');
     const [orderInput, setOrderInput] = useState<string>('DESC');
 
+    const [dateLow, setDateLow] = useState<string>('');
+    const [dateLowInput, setDateLowInput] = useState<string>('');
+
+    const [dateHigh, setDateHigh] = useState<string>('');
+    const [dateHighInput, setDateHighInput] = useState<string>('');
+
+    const [zipCode, setZipCode] = useState<string>('');
+    const [zipCodeInput, setZipCodeInput] = useState<string>('');
+
+    const [jewishHoliday, setJewishHoliday] = useState<string>('');
+    const [jewishHolidayInput, setJewishHolidayInput] = useState<string>('');
+
     // Chemical filtering
     const [chemicals, setChemicals] = useState<Chemical[]>([]);
     const [selectedChemicalIds, setSelectedChemicalIds] = useState<number[]>([]);
@@ -62,6 +74,10 @@ export default function ListFormsPage() {
                         search_name: searchName || null,
                         sort_by: sortBy || null,
                         order: order || null,
+                        date_low: dateLow ? new Date(dateLow).toISOString() : null,
+                        date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
+                        zip_code: zipCode || null,
+                        jewish_holiday: jewishHoliday || null,
                         chemical_ids: selectedChemicalIds.length > 0 ? selectedChemicalIds : null,
                     }
                 );
@@ -82,14 +98,20 @@ export default function ListFormsPage() {
         };
 
         fetchForms();
-    }, [limit, offset, formType, searchName, sortBy, order, selectedChemicalIds]);
+    }, [limit, offset, formType, searchName, sortBy, order, dateLow, dateHigh, zipCode, jewishHoliday, selectedChemicalIds]);
 
     const handleApplyFilters = () => {
         setSearchName(searchNameInput);
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
+        setDateLow(dateLowInput + 'T:00.00');
+        setDateHigh(dateHighInput + 'T:23:59');
+        setZipCode(zipCodeInput);
+        setJewishHoliday(jewishHolidayInput);
         setOffset(0);
+        console.log(`date low: ${dateLow}\n`)
+        console.log(`date high: ${dateHigh}\n`)
     };
 
     const handleResetFilters = () => {
@@ -97,10 +119,18 @@ export default function ListFormsPage() {
         setFormTypeInput('');
         setSortByInput('created_at');
         setOrderInput('DESC');
+        setDateLowInput('');
+        setDateHighInput('');
+        setZipCodeInput('');
+        setJewishHolidayInput('');
         setSearchName('');
         setFormType('');
         setSortBy('created_at');
         setOrder('DESC');
+        setDateLow('');
+        setDateHigh('');
+        setZipCode('');
+        setJewishHoliday('');
         setSelectedChemicalIds([]);
         setSelectedChemicalDropdown('');
         setOffset(0);
@@ -140,13 +170,18 @@ export default function ListFormsPage() {
             await formsClient.deleteForm(formToDelete.id);
 
             // Refresh the forms list
-            const data = await formsClient.listFormsAllUsers({
+            const data = await formsClient.listFormsByUserId({
+                limit: limit,
                 offset: offset,
                 form_type: formType || null,
                 search_name: searchName || null,
                 sort_by: sortBy || null,
                 order: order || null,
-                chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
+                date_low: dateLow ? new Date(dateLow).toISOString() : null,
+                date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
+                zip_code: zipCode || null,
+                jewish_holiday: jewishHoliday || null,
+                chemical_ids: selectedChemicalIds.length > 0 ? selectedChemicalIds : null,
             });
             setFormviewList(data);
             setError(null);
@@ -268,6 +303,7 @@ export default function ListFormsPage() {
                                         <option value="created_at">Date Created</option>
                                         <option value="first_name">First Name</option>
                                         <option value="last_name">Last Name</option>
+                                        <option value="first_app_date">First Application Date</option>
                                     </select>
                                 </div>
 
@@ -336,6 +372,62 @@ export default function ListFormsPage() {
                                         })}
                                     </div>
                                 )}
+                                {/* Date Low*/}
+                                <div>
+                                    <label htmlFor="dateLowInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Minimum First Application Date
+                                    </label>
+                                    <input
+                                        id="dateLowInput"
+                                        type="date"
+                                        value={dateLowInput}
+                                        onChange={(e) => setDateLowInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                {/* Date High */}
+                                <div>
+                                    <label htmlFor="dateHighInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Maximum Final Application Date
+                                    </label>
+                                    <input
+                                        id="dateHighInput"
+                                        type="date"
+                                        value={dateHighInput}
+                                        onChange={(e) => setDateHighInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                {/* Zip Code */}
+                                <div>
+                                    <label htmlFor="zipCodeInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Zip Code
+                                    </label>
+                                    <input
+                                        id="zipCodeInput"
+                                        type="text"
+                                        value={zipCodeInput}
+                                        onChange={(e) => setZipCodeInput(e.target.value)}
+                                        placeholder="12345 or 12345-6789"
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                {/* JewishHoliday */}
+                                <div>
+                                    <label htmlFor="jewishHolidayInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                        Jewish Holiday
+                                    </label>
+                                    <select
+                                        id="jewishHolidayInput"
+                                        value={jewishHolidayInput}
+                                        onChange={(e) => setJewishHolidayInput(e.target.value)}
+                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Either</option>
+                                        <option value="yes">True</option>
+                                        <option value="no">False</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Action Buttons */}

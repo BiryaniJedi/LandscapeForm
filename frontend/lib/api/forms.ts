@@ -181,6 +181,10 @@ export class FormsClient extends ApiClient {
         if (params.search_name) queryParams.append('search', params.search_name)
         if (params.sort_by) queryParams.append('sort_by', params.sort_by)
         if (params.order) queryParams.append('order', params.order)
+        if (params.date_low) queryParams.append('date_low', params.date_low)
+        if (params.date_high) queryParams.append('date_high', params.date_high)
+        if (params.zip_code) queryParams.append('zip_code', params.zip_code)
+        if (params.jewish_holiday) queryParams.append('jewish_holiday', params.jewish_holiday)
         if (params.chemical_ids && params.chemical_ids.length > 0) {
             queryParams.append('chemicals', params.chemical_ids.join(','))
         }
