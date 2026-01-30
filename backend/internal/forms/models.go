@@ -25,11 +25,11 @@ type Form struct {
 	CallBefore   bool
 	IsHoliday    bool
 
-	FirstAppDate *time.Time
-	LastAppDate  *time.Time
+	FirstAppDate time.Time
+	LastAppDate  time.Time
 
-	AppTimes     []PestApp
-	Notes        []Note
+	AppTimes []PestApp
+	Notes    []Note
 }
 
 type PestApp struct {

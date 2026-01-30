@@ -177,8 +177,11 @@ export interface ShrubForm {
     other_phone: string;
     call_before: boolean;
     is_holiday: boolean;
+    first_app_date: string;
+    last_app_date: string;
     // Shrub-specific field
     flea_only: boolean;
+    pest_apps: PesticideApplicationResponse[];
 }
 
 /**
@@ -201,9 +204,12 @@ export interface LawnForm {
     other_phone: string;
     call_before: boolean;
     is_holiday: boolean;
+    first_app_date: string;
+    last_app_date: string;
     // Lawn-specific fields
     lawn_area_sq_ft: number;
     fert_only: boolean;
+    pest_apps: PesticideApplicationResponse[];
 }
 
 /**
@@ -226,11 +232,14 @@ export interface FormViewResponse {
     other_phone: string;
     call_before: boolean;
     is_holiday: boolean;
+    first_app_date: string;
+    last_app_date: string;
     // Shrub-specific field (null if lawn form)
     flea_only?: boolean | null;
     // Lawn-specific fields (null if shrub form)
     lawn_area_sq_ft?: number | null;
     fert_only?: boolean | null;
+    pest_apps: PesticideApplicationResponse[];
 }
 
 /**

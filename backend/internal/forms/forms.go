@@ -426,8 +426,8 @@ func (r *FormsRepository) ListFormsByUserId(
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
 			lf.fert_only,
-			fad.first_app_date,
-			fad.last_app_date
+			COALESCE(fad.first_app_date, '1970-01-01 00:00:00'::timestamp) as first_app_date,
+			COALESCE(fad.last_app_date, '1970-01-01 00:00:00'::timestamp) as last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
@@ -456,14 +456,10 @@ func (r *FormsRepository) ListFormsByUserId(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form  Form
-			shrub shrubRow
-			lawn  lawnRow
-		)
-
-		var (
-			firstAppDate sql.NullTime
-			lastAppDate  sql.NullTime
+			form    Form
+			shrub   shrubRow
+			lawn    lawnRow
+			pestApp PestApp
 		)
 
 		err := rows.Scan(
@@ -485,20 +481,44 @@ func (r *FormsRepository) ListFormsByUserId(
 			&shrub.FleaOnly,
 			&lawn.LawnAreaSqFt,
 			&lawn.FertOnly,
-			&firstAppDate,
-			&lastAppDate,
+			&form.FirstAppDate,
+			&form.LastAppDate,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
 
-		// Assign application dates if valid
-		if firstAppDate.Valid {
-			form.FirstAppDate = &firstAppDate.Time
+		query = `
+		    SELECT
+			    pa.id,
+				pa.chem_used,
+				pa.app_timestamp,
+				pa.rate,
+				pa.amount_applied,
+				pa.location_code
+			FROM pesticide_applications pa
+			WHERE pa.form_id = $1
+		`
+		appRows, err := r.db.QueryContext(ctx, query, form.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching pesticide applications for form: %s. %w", form.ID, err)
 		}
-		if lastAppDate.Valid {
-			form.LastAppDate = &lastAppDate.Time
+		var pestApps []PestApp
+		for appRows.Next() {
+			err = appRows.Scan(
+				&pestApp.ID,
+				&pestApp.ChemUsed,
+				&pestApp.AppTimestamp,
+				&pestApp.Rate,
+				&pestApp.AmountApplied,
+				&pestApp.LocationCode,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("Error scanning pesticide application fo form: %s. %w", form.ID, err)
+			}
+			pestApps = append(pestApps, pestApp)
 		}
+		form.AppTimes = pestApps
 
 		var view *FormView
 		switch form.FormType {
@@ -669,8 +689,8 @@ func (r *FormsRepository) ListAllForms(
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
 			lf.fert_only,
-			fad.first_app_date,
-			fad.last_app_date
+			COALESCE(fad.first_app_date, '1970-01-01 00:00:00'::timestamp) as first_app_date,
+			COALESCE(fad.last_app_date, '1970-01-01 00:00:00'::timestamp) as last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
@@ -699,14 +719,10 @@ func (r *FormsRepository) ListAllForms(
 	var forms []*FormView
 	for rows.Next() {
 		var (
-			form  Form
-			shrub shrubRow
-			lawn  lawnRow
-		)
-
-		var (
-			firstAppDate sql.NullTime
-			lastAppDate  sql.NullTime
+			form    Form
+			shrub   shrubRow
+			lawn    lawnRow
+			pestApp PestApp
 		)
 
 		err := rows.Scan(
@@ -728,21 +744,44 @@ func (r *FormsRepository) ListAllForms(
 			&shrub.FleaOnly,
 			&lawn.LawnAreaSqFt,
 			&lawn.FertOnly,
-			&firstAppDate,
-			&lastAppDate,
+			&form.FirstAppDate,
+			&form.LastAppDate,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
 
-		// Assign application dates if valid
-		if firstAppDate.Valid {
-			form.FirstAppDate = &firstAppDate.Time
+		query = `
+		    SELECT
+			    pa.id,
+				pa.chem_used,
+				pa.app_timestamp,
+				pa.rate,
+				pa.amount_applied,
+				pa.location_code
+			FROM pesticide_applications pa
+			WHERE pa.form_id = $1
+		`
+		appRows, err := r.db.QueryContext(ctx, query, form.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching pesticide applications for form: %s. %w", form.ID, err)
 		}
-		if lastAppDate.Valid {
-			form.LastAppDate = &lastAppDate.Time
+		var pestApps []PestApp
+		for appRows.Next() {
+			err = appRows.Scan(
+				&pestApp.ID,
+				&pestApp.ChemUsed,
+				&pestApp.AppTimestamp,
+				&pestApp.Rate,
+				&pestApp.AmountApplied,
+				&pestApp.LocationCode,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("Error scanning pesticide application fo form: %s. %w", form.ID, err)
+			}
+			pestApps = append(pestApps, pestApp)
 		}
-
+		form.AppTimes = pestApps
 		var view *FormView
 		switch form.FormType {
 		case "shrub":
@@ -818,8 +857,8 @@ func (r *FormsRepository) GetFormViewById(
 			sf.flea_only,
 			lf.lawn_area_sq_ft,
 			lf.fert_only,
-			fad.first_app_date,
-			fad.last_app_date
+			COALESCE(fad.first_app_date, '1970-01-01 00:00:00'::timestamp) as first_app_date,
+			COALESCE(fad.last_app_date, '1970-01-01 00:00:00'::timestamp) as last_app_date
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
@@ -829,11 +868,10 @@ func (r *FormsRepository) GetFormViewById(
 	`
 
 	var (
-		form         Form
-		shrub        shrubRow
-		lawn         lawnRow
-		firstAppDate sql.NullTime
-		lastAppDate  sql.NullTime
+		form    Form
+		shrub   shrubRow
+		lawn    lawnRow
+		pestApp PestApp
 	)
 
 	err := r.db.QueryRowContext(ctx, query, formID, userID).Scan(
@@ -855,21 +893,45 @@ func (r *FormsRepository) GetFormViewById(
 		&shrub.FleaOnly,
 		&lawn.LawnAreaSqFt,
 		&lawn.FertOnly,
-		&firstAppDate,
-		&lastAppDate,
+		&form.FirstAppDate,
+		&form.LastAppDate,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
 		return nil, err
 	}
 
-	// Assign application dates if valid
-	if firstAppDate.Valid {
-		form.FirstAppDate = &firstAppDate.Time
+	query = `
+		SELECT
+			pa.id,
+			pa.chem_used,
+			pa.app_timestamp,
+			pa.rate,
+			pa.amount_applied,
+			pa.location_code
+		FROM pesticide_applications pa
+		WHERE pa.form_id = $1
+	`
+	appRows, err := r.db.QueryContext(ctx, query, form.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching pesticide applications for form: %s. %w", form.ID, err)
 	}
-	if lastAppDate.Valid {
-		form.LastAppDate = &lastAppDate.Time
+	var pestApps []PestApp
+	for appRows.Next() {
+		err = appRows.Scan(
+			&pestApp.ID,
+			&pestApp.ChemUsed,
+			&pestApp.AppTimestamp,
+			&pestApp.Rate,
+			&pestApp.AmountApplied,
+			&pestApp.LocationCode,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning pesticide application fo form: %s. %w", form.ID, err)
+		}
+		pestApps = append(pestApps, pestApp)
 	}
+	form.AppTimes = pestApps
 
 	var view *FormView
 	switch form.FormType {
@@ -912,6 +974,15 @@ func (r *FormsRepository) GetShrubFormById(
 ) (ShrubForm, error) {
 
 	query := `
+		WITH form_app_dates AS (
+			SELECT
+				form_id,
+				MIN(app_timestamp) as first_app_date,
+				MAX(app_timestamp) as last_app_date
+			FROM pesticide_applications
+			WHERE form_id = $1
+			GROUP BY form_id
+		)
 		SELECT
 			f.id,
 			f.created_by,
@@ -928,9 +999,12 @@ func (r *FormsRepository) GetShrubFormById(
 			f.other_phone,
 			f.call_before,
 			f.is_holiday,
+			COALESCE(fad.first_app_date, '1970-01-01 00:00:00'::timestamp) as first_app_date,
+			COALESCE(fad.last_app_date, '1970-01-01 00:00:00'::timestamp) as last_app_date,
 			sf.flea_only
 		FROM forms f
 		LEFT JOIN shrub_forms sf ON f.id = sf.form_id
+		LEFT JOIN form_app_dates fad ON f.id = fad.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
@@ -953,12 +1027,50 @@ func (r *FormsRepository) GetShrubFormById(
 		&shrubForm.OtherPhone,
 		&shrubForm.CallBefore,
 		&shrubForm.IsHoliday,
+		&shrubForm.FirstAppDate,
+		&shrubForm.LastAppDate,
 		&shrubForm.FleaOnly,
 	)
 	if err != nil {
 		// Important: let sql.ErrNoRows propagate
 		return ShrubForm{}, err
 	}
+
+	// Load pesticide applications
+	query = `
+		SELECT
+			pa.id,
+			pa.chem_used,
+			pa.app_timestamp,
+			pa.rate,
+			pa.amount_applied,
+			pa.location_code
+		FROM pesticide_applications pa
+		WHERE pa.form_id = $1
+	`
+	appRows, err := r.db.QueryContext(ctx, query, shrubForm.ID)
+	if err != nil {
+		return ShrubForm{}, fmt.Errorf("error fetching pesticide applications for form: %s. %w", shrubForm.ID, err)
+	}
+	defer appRows.Close()
+
+	var pestApps []PestApp
+	for appRows.Next() {
+		var pestApp PestApp
+		err = appRows.Scan(
+			&pestApp.ID,
+			&pestApp.ChemUsed,
+			&pestApp.AppTimestamp,
+			&pestApp.Rate,
+			&pestApp.AmountApplied,
+			&pestApp.LocationCode,
+		)
+		if err != nil {
+			return ShrubForm{}, fmt.Errorf("error scanning pesticide application for form: %s. %w", shrubForm.ID, err)
+		}
+		pestApps = append(pestApps, pestApp)
+	}
+	shrubForm.AppTimes = pestApps
 
 	return shrubForm, nil
 }
@@ -972,6 +1084,15 @@ func (r *FormsRepository) GetLawnFormById(
 ) (LawnForm, error) {
 
 	query := `
+		WITH form_app_dates AS (
+			SELECT
+				form_id,
+				MIN(app_timestamp) as first_app_date,
+				MAX(app_timestamp) as last_app_date
+			FROM pesticide_applications
+			WHERE form_id = $1
+			GROUP BY form_id
+		)
 		SELECT
 			f.id,
 			f.created_by,
@@ -988,10 +1109,13 @@ func (r *FormsRepository) GetLawnFormById(
 			f.other_phone,
 			f.call_before,
 			f.is_holiday,
+			COALESCE(fad.first_app_date, '1970-01-01 00:00:00'::timestamp) as first_app_date,
+			COALESCE(fad.last_app_date, '1970-01-01 00:00:00'::timestamp) as last_app_date,
 			lf.lawn_area_sq_ft,
 			lf.fert_only
 		FROM forms f
 		LEFT JOIN lawn_forms lf ON f.id = lf.form_id
+		LEFT JOIN form_app_dates fad ON f.id = fad.form_id
 		WHERE f.id = $1
 		  AND f.created_by = $2
 	`
@@ -1014,6 +1138,8 @@ func (r *FormsRepository) GetLawnFormById(
 		&lawnForm.OtherPhone,
 		&lawnForm.CallBefore,
 		&lawnForm.IsHoliday,
+		&lawnForm.FirstAppDate,
+		&lawnForm.LastAppDate,
 		&lawnForm.LawnAreaSqFt,
 		&lawnForm.FertOnly,
 	)
@@ -1021,6 +1147,42 @@ func (r *FormsRepository) GetLawnFormById(
 		// Important: let sql.ErrNoRows propagate
 		return LawnForm{}, err
 	}
+
+	// Load pesticide applications
+	query = `
+		SELECT
+			pa.id,
+			pa.chem_used,
+			pa.app_timestamp,
+			pa.rate,
+			pa.amount_applied,
+			pa.location_code
+		FROM pesticide_applications pa
+		WHERE pa.form_id = $1
+	`
+	appRows, err := r.db.QueryContext(ctx, query, lawnForm.ID)
+	if err != nil {
+		return LawnForm{}, fmt.Errorf("error fetching pesticide applications for form: %s. %w", lawnForm.ID, err)
+	}
+	defer appRows.Close()
+
+	var pestApps []PestApp
+	for appRows.Next() {
+		var pestApp PestApp
+		err = appRows.Scan(
+			&pestApp.ID,
+			&pestApp.ChemUsed,
+			&pestApp.AppTimestamp,
+			&pestApp.Rate,
+			&pestApp.AmountApplied,
+			&pestApp.LocationCode,
+		)
+		if err != nil {
+			return LawnForm{}, fmt.Errorf("error scanning pesticide application for form: %s. %w", lawnForm.ID, err)
+		}
+		pestApps = append(pestApps, pestApp)
+	}
+	lawnForm.AppTimes = pestApps
 
 	return lawnForm, nil
 }
@@ -1124,7 +1286,8 @@ func (r *FormsRepository) UpdateShrubFormById(
 		return ShrubForm{}, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return shrubForm, nil
+	// Fetch the complete form with applications and dates
+	return r.GetShrubFormById(ctx, formID, userID)
 }
 
 // UpdateLawnFormById updates a lawn form
@@ -1228,7 +1391,8 @@ func (r *FormsRepository) UpdateLawnFormById(
 		return LawnForm{}, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return lawnForm, nil
+	// Fetch the complete form with applications and dates
+	return r.GetLawnFormById(ctx, formID, userID)
 }
 
 // DeleteFormById deletes a form owned by the given user.

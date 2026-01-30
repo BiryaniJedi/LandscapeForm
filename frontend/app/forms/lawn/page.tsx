@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { chemicalsClient } from '@/lib/api/chemicals';
 import { Chemical, PesticideApplication } from '@/lib/api/types';
+import { siteCodesFirst, siteCodesSecond } from '@/lib/common/siteCodes';
 
 export default function CreateLawnFormPage() {
     const router = useRouter();
@@ -70,12 +71,29 @@ export default function CreateLawnFormPage() {
             return;
         }
 
+        // Validate location code format
+        if (locationCode.length !== 2) {
+            setError('Location code must be exactly 2 characters');
+            return;
+        }
+        const firstChar = locationCode[0];
+        const secondChar = locationCode[1].toUpperCase();
+
+        if (!Object.keys(siteCodesFirst).includes(firstChar)) {
+            setError(`First character of location code must be one of: ${Object.keys(siteCodesFirst).join(', ')}`);
+            return;
+        }
+        if (!Object.keys(siteCodesSecond).includes(secondChar)) {
+            setError(`Second character of location code must be one of: ${Object.keys(siteCodesSecond).join(', ')}`);
+            return;
+        }
+
         const newApplication: PesticideApplication = {
             chem_used: chemicals[chemIndexNum].id,
             app_timestamp: new Date(appTimestamp).toISOString(),
             rate: rate,
             amount_applied: parseFloat(amountApplied),
-            location_code: locationCode,
+            location_code: firstChar + secondChar,
         };
 
         setApplications([...applications, newApplication]);
@@ -544,6 +562,72 @@ export default function CreateLawnFormPage() {
                                 >
                                     <span className="mr-2">+</span> Add Application
                                 </button>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                                Location Code Reference (combine one from each table)
+                            </h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* First Site Code Table */}
+                                <div className="bg-white dark:bg-zinc-900 rounded-lg shadow overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+                                            <thead className="bg-zinc-50 dark:bg-zinc-800">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                                        Code
+                                                    </th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                                        Location
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
+                                                {Object.entries(siteCodesFirst).map(([code, location]) => (
+                                                    <tr key={code}>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                                                            {code}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-50">
+                                                            {location}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Second Site Code Table */}
+                                <div className="bg-white dark:bg-zinc-900 rounded-lg shadow overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+                                            <thead className="bg-zinc-50 dark:bg-zinc-800">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                                        Code
+                                                    </th>
+                                                    <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                                        Location
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
+                                                {Object.entries(siteCodesSecond).map(([code, location]) => (
+                                                    <tr key={code}>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                                                            {code}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-50">
+                                                            {location}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

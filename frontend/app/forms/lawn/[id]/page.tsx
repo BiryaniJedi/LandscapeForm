@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { LawnForm } from '@/lib/api/types';
+import { formatDate } from '@/lib/common/dateFormat'
 
 export default function LawnFormDetailPage() {
     const router = useRouter();
@@ -89,13 +90,6 @@ export default function LawnFormDetailPage() {
                 <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
                     {form && (
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Form ID
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.id}</p>
-                            </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
@@ -142,6 +136,18 @@ export default function LawnFormDetailPage() {
                                     Lawn Area
                                 </label>
                                 <p className="text-zinc-900 dark:text-zinc-50">{form.lawn_area_sq_ft} sq ft</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                    First Pesticide Application Date
+                                </label>
+                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(form.first_app_date)}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                    Last Pesticide Application Date
+                                </label>
+                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(form.last_app_date)}</p>
                             </div>
 
                             <div className="space-y-2">

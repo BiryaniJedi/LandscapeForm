@@ -508,6 +508,12 @@ export default function ListFormsPage() {
                                                 View Details
                                             </button>
                                             <button
+                                                onClick={() => router.push(`/forms/${formview.id}/print`)}
+                                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                                            >
+                                                Print Format
+                                            </button>
+                                            <button
                                                 onClick={() => handleDeleteClick(formview)}
                                                 disabled={deletingFormId === formview.id}
                                                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"

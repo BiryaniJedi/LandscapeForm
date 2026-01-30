@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { ShrubForm } from '@/lib/api/types';
+import { formatDate } from '@/lib/common/dateFormat'
 
 export default function ShrubFormDetailPage() {
     const router = useRouter();
@@ -89,57 +90,72 @@ export default function ShrubFormDetailPage() {
                 <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
                     {form && (
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Form ID
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.id}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                        First Name
+                                    </label>
+                                    <p className="text-zinc-900 dark:text-zinc-50">{form.first_name}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                        Last Name
+                                    </label>
+                                    <p className="text-zinc-900 dark:text-zinc-50">{form.last_name}</p>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    First Name
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.first_name}</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Last Name
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.last_name}</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Home Phone
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.home_phone}</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Number of Shrubs
-                                </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">{form.num_shrubs}</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Created At
+                                    Address
                                 </label>
                                 <p className="text-zinc-900 dark:text-zinc-50">
-                                    {new Date(form.created_at).toLocaleString()}
+                                    {form.street_number} {form.street_name}, {form.town} {form.zip_code}
                                 </p>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                        Home Phone
+                                    </label>
+                                    <p className="text-zinc-900 dark:text-zinc-50">{form.home_phone}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                        Other Phone
+                                    </label>
+                                    <p className="text-zinc-900 dark:text-zinc-50">{form.other_phone || 'N/A'}</p>
+                                </div>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                                    Updated At
+                                    First Pesticide Application Date
                                 </label>
-                                <p className="text-zinc-900 dark:text-zinc-50">
-                                    {new Date(form.updated_at).toLocaleString()}
-                                </p>
+                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(form.first_app_date)}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                    Last Pesticide Application Date
+                                </label>
+                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(form.last_app_date)}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center">
+                                    <input type="checkbox" checked={form.call_before} disabled className="mr-2" />
+                                    <span className="text-sm text-zinc-900 dark:text-zinc-50">Call Before Visit</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <input type="checkbox" checked={form.is_holiday} disabled className="mr-2" />
+                                    <span className="text-sm text-zinc-900 dark:text-zinc-50">Holiday Property</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <input type="checkbox" checked={form.flea_only} disabled className="mr-2" />
+                                    <span className="text-sm text-zinc-900 dark:text-zinc-50">Flea Only</span>
+                                </div>
                             </div>
                         </div>
                     )}

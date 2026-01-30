@@ -33,6 +33,25 @@ func respondSuccess(w http.ResponseWriter, message string) {
 	})
 }
 
+func pestAppToResponse(pestApp forms.PestApp) PesticideApplicationResponse {
+	return PesticideApplicationResponse{
+		ID:            pestApp.ID,
+		ChemUsed:      pestApp.ChemUsed,
+		AppTimestamp:  pestApp.AppTimestamp,
+		Rate:          pestApp.Rate,
+		AmountApplied: pestApp.AmountApplied,
+		LocationCode:  pestApp.LocationCode,
+	}
+}
+
+func pestAppsToResponse(pestApps []forms.PestApp) []PesticideApplicationResponse {
+	var responses []PesticideApplicationResponse
+	for _, pestApp := range pestApps {
+		responses = append(responses, pestAppToResponse(pestApp))
+	}
+	return responses
+}
+
 func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
 	return ShrubFormResponse{
 		ID:           shrubForm.ID,
@@ -50,7 +69,10 @@ func shrubFormToResponse(shrubForm forms.ShrubForm) ShrubFormResponse {
 		OtherPhone:   shrubForm.OtherPhone,
 		CallBefore:   shrubForm.CallBefore,
 		IsHoliday:    shrubForm.IsHoliday,
+		FirstAppDate: shrubForm.FirstAppDate,
+		LastAppDate:  shrubForm.LastAppDate,
 		FleaOnly:     shrubForm.FleaOnly,
+		PestApps:     pestAppsToResponse(shrubForm.AppTimes),
 	}
 }
 
@@ -71,8 +93,11 @@ func lawnFormToResponse(lawnForm forms.LawnForm) LawnFormResponse {
 		OtherPhone:   lawnForm.OtherPhone,
 		CallBefore:   lawnForm.CallBefore,
 		IsHoliday:    lawnForm.IsHoliday,
+		FirstAppDate: lawnForm.FirstAppDate,
+		LastAppDate:  lawnForm.LastAppDate,
 		LawnAreaSqFt: lawnForm.LawnAreaSqFt,
 		FertOnly:     lawnForm.FertOnly,
+		PestApps:     pestAppsToResponse(lawnForm.AppTimes),
 	}
 }
 
@@ -97,6 +122,9 @@ func formViewToResponse(view *forms.FormView) FormViewResponse {
 		resp.OtherPhone = view.Shrub.Form.OtherPhone
 		resp.CallBefore = view.Shrub.Form.CallBefore
 		resp.IsHoliday = view.Shrub.Form.IsHoliday
+		resp.FirstAppDate = view.Shrub.Form.FirstAppDate
+		resp.LastAppDate = view.Shrub.Form.LastAppDate
+		resp.PestApps = pestAppsToResponse(view.Shrub.Form.AppTimes)
 		resp.FleaOnly = &view.Shrub.FleaOnly
 	}
 
@@ -115,7 +143,10 @@ func formViewToResponse(view *forms.FormView) FormViewResponse {
 		resp.OtherPhone = view.Lawn.Form.OtherPhone
 		resp.CallBefore = view.Lawn.Form.CallBefore
 		resp.IsHoliday = view.Lawn.Form.IsHoliday
+		resp.FirstAppDate = view.Lawn.Form.FirstAppDate
+		resp.LastAppDate = view.Lawn.Form.LastAppDate
 		resp.LawnAreaSqFt = &view.Lawn.LawnAreaSqFt
+		resp.PestApps = pestAppsToResponse(view.Lawn.Form.AppTimes)
 		resp.FertOnly = &view.Lawn.FertOnly
 	}
 
