@@ -22,3 +22,10 @@ modules.md
 
 CLAUDE.md
 TODO.md
+
+# Deployment and demo documentation (internal use only)
+DEPLOYMENT_GUIDE.md
+DEPLOYMENT_PROPOSAL.md
+DEPLOYMENT_SUMMARY.md
+DEMO_SCRIPT.md
+FRIDAY_CHECKLIST.md
