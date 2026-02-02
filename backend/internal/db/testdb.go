@@ -27,8 +27,27 @@ func TestDB(t *testing.T) *sql.DB {
 		t.Fatalf("ping db: %v", err)
 	}
 
-	// Reset schema (hard reset)
-	_, err = db.Exec(`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`)
+	// Drop all objects in the public schema (preserves extensions and their functions)
+	_, err = db.Exec(`
+		DO $$ DECLARE
+			r RECORD;
+		BEGIN
+			-- Drop all tables
+			FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+				EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+			END LOOP;
+			-- Drop all user-defined functions (exclude extension functions)
+			FOR r IN (SELECT p.proname, pg_get_function_identity_arguments(p.oid) as args
+					  FROM pg_proc p
+					  INNER JOIN pg_namespace ns ON (p.pronamespace = ns.oid)
+					  LEFT JOIN pg_depend d ON (d.objid = p.oid AND d.deptype = 'e')
+					  WHERE ns.nspname = 'public'
+					  AND p.prokind = 'f'
+					  AND d.objid IS NULL) LOOP
+				EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r.proname) || '(' || r.args || ') CASCADE';
+			END LOOP;
+		END $$;
+	`)
 	if err != nil {
 		t.Fatalf("reset schema: %v", err)
 	}

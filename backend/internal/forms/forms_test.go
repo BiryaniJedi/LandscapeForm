@@ -22,9 +22,10 @@ func createTestUser(t *testing.T, db *sql.DB) string {
 	t.Helper()
 
 	var id string
+	// Generate unique username using random UUID suffix
 	err := db.QueryRow(`
 		INSERT INTO users (first_name, last_name, username, password_hash)
-		VALUES ('Test', 'User', 'TestUserName1', 'TestPass')
+		VALUES ('Test', 'User', 'TestUser_' || gen_random_uuid()::text, 'TestPass')
 		RETURNING id
 	`).Scan(&id)
 
