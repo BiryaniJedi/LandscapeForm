@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { chemicalsClient } from '@/lib/api/chemicals';
 import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
+import { formatDate } from '@/lib/common/dateFormat'
 
 export default function ListFormsAllUsersPage() {
     const router = useRouter();
@@ -112,8 +113,19 @@ export default function ListFormsAllUsersPage() {
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
-        setDateLow(dateLowInput);
-        setDateHigh(dateHighInput);
+
+        let newDateStr = dateLowInput + 'T00:00';
+        if (verifyDateString(newDateStr)) {
+            console.log(`MATCHED newDateStr: ${newDateStr}`);
+            setDateLow(newDateStr);
+        }
+        newDateStr = dateHighInput + 'T23:59';
+        console.log(`HighDateStr: ${newDateStr}`);
+        if (verifyDateString(newDateStr)) {
+            console.log(`HIGH MATCHED newDateStr: ${newDateStr}`);
+            setDateHigh(newDateStr);
+        }
+
         setZipCode(zipCodeInput);
         setJewishHoliday(jewishHolidayInput);
         setChemicalsFilter(chemicalsFilterInput);
@@ -141,6 +153,15 @@ export default function ListFormsAllUsersPage() {
         setChemicalsFilter([]);
         setOffset(0);
     };
+
+    const verifyDateString = (newDateString: string): boolean => {
+        console.log("CALLED")
+        let newDate = new Date(newDateString);
+        if (isNaN(newDate.getTime()))
+            return false;
+        console.log("TRUE")
+        return true;
+    }
 
     const handleDeleteClick = (form: FormViewResponse) => {
         setFormToDelete(form);
@@ -318,54 +339,54 @@ export default function ListFormsAllUsersPage() {
 
                             {/* Chemicals Filter - Full Width Row */}
                             <div className="mt-4">
-                                    <label htmlFor="chemicalsFilterInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                        Filter by Chemicals Used
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <select
-                                            id="chemicalsFilterInput"
-                                            value={selectedChemicalDropdown}
-                                            onChange={(e) => setSelectedChemicalDropdown(e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        >
-                                            <option value="">Select a chemical...</option>
-                                            {chemicals.map((chem) => (
-                                                <option key={chem.id} value={chem.id}>
-                                                    {chem.brand_name} - {chem.chemical_name} ({chem.category})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            type="button"
-                                            onClick={handleAddChemical}
-                                            disabled={!selectedChemicalDropdown}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Add
-                                        </button>
-                                    </div>
-                                    {chemicalsFilterInput.length > 0 && (
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            {chemicalsFilterInput.map((chemId) => {
-                                                const chem = chemicals.find(c => c.id === chemId);
-                                                return chem ? (
-                                                    <div
-                                                        key={chemId}
-                                                        className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                <label htmlFor="chemicalsFilterInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Filter by Chemicals Used
+                                </label>
+                                <div className="flex gap-2">
+                                    <select
+                                        id="chemicalsFilterInput"
+                                        value={selectedChemicalDropdown}
+                                        onChange={(e) => setSelectedChemicalDropdown(e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Select a chemical...</option>
+                                        {chemicals.map((chem) => (
+                                            <option key={chem.id} value={chem.id}>
+                                                {chem.brand_name} - {chem.chemical_name} ({chem.category})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddChemical}
+                                        disabled={!selectedChemicalDropdown}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                {chemicalsFilterInput.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {chemicalsFilterInput.map((chemId) => {
+                                            const chem = chemicals.find(c => c.id === chemId);
+                                            return chem ? (
+                                                <div
+                                                    key={chemId}
+                                                    className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                >
+                                                    <span>{chem.brand_name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveChemical(chemId)}
+                                                        className="hover:text-blue-600 dark:hover:text-blue-300"
                                                     >
-                                                        <span>{chem.brand_name}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveChemical(chemId)}
-                                                            className="hover:text-blue-600 dark:hover:text-blue-300"
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                ) : null;
-                                            })}
-                                        </div>
-                                    )}
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Additional Filters - Second Row */}
@@ -377,7 +398,7 @@ export default function ListFormsAllUsersPage() {
                                     </label>
                                     <input
                                         id="dateLowInput"
-                                        type="datetime-local"
+                                        type="date"
                                         value={dateLowInput}
                                         onChange={(e) => setDateLowInput(e.target.value)}
                                         className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -391,7 +412,7 @@ export default function ListFormsAllUsersPage() {
                                     </label>
                                     <input
                                         id="dateHighInput"
-                                        type="datetime-local"
+                                        type="date"
                                         value={dateHighInput}
                                         onChange={(e) => setDateHighInput(e.target.value)}
                                         className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -504,6 +525,18 @@ export default function ListFormsAllUsersPage() {
                                                     }`}>
                                                     {formview.form_type}
                                                 </span>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                    First Pesticide Application Date
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(formview.first_app_date)}</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                    Last Pesticide Application Date
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(formview.last_app_date)}</p>
                                             </div>
                                         </div>
 

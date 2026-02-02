@@ -8,11 +8,6 @@ import { chemicalsClient } from '@/lib/api/chemicals';
 import { FormViewResponse, ListChemicalsResponse } from '@/lib/api/types';
 
 // Dynamically import PDF components (they don't work with SSR)
-const PDFDownloadLink = dynamic(
-    () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
-    { ssr: false }
-);
-
 const PDFViewer = dynamic(
     () => import('@react-pdf/renderer').then((mod) => mod.PDFViewer),
     { ssr: false }
@@ -30,7 +25,6 @@ export default function PrintFormPage() {
     const [chemList, setChemList] = useState<ListChemicalsResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showPreview, setShowPreview] = useState(true);
 
     useEffect(() => {
         const fetchForm = async () => {
@@ -113,12 +107,6 @@ export default function PrintFormPage() {
                         </h1>
                         <div className="flex gap-2">
                             <button
-                                onClick={() => setShowPreview(!showPreview)}
-                                className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                            >
-                                {showPreview ? 'Hide Preview' : 'Show Preview'}
-                            </button>
-                            <button
                                 onClick={() => router.push('/dashboard')}
                                 className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
                             >
@@ -130,7 +118,7 @@ export default function PrintFormPage() {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {showPreview && processedData && (
+                {processedData && (
                     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
                         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
                             PDF Preview

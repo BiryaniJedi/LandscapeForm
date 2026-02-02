@@ -2,7 +2,6 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { FormViewResponse, ListChemicalsResponse } from '@/lib/api/types';
 import { siteCodesFirst, siteCodesSecond } from '../common/siteCodes';
-import { chemicalsClient } from '../api/chemicals';
 
 // Compact styles for single-page layout
 const styles = StyleSheet.create({
@@ -135,7 +134,7 @@ const FormPDFDocument: React.FC<FormPDFDocumentProps> = ({ form, chemicalList })
                         <Text style={styles.titleText}>
                             {form.form_type.toUpperCase()} Treatment Program April - November 2026
                         </Text>
-                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 4 }}>
+                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 8 }}>
                             Kindergan Address Here
                         </Text>
                         <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>
@@ -144,13 +143,13 @@ const FormPDFDocument: React.FC<FormPDFDocumentProps> = ({ form, chemicalList })
                         <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>
                             Kindergan Address Here
                         </Text>
-                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>
+                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 8 }}>
                             NJDEP#: **number**
                         </Text>
-                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>
+                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 8 }}>
                             Resp Applic: **Name** - Lic #: **number**
                         </Text>
-                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>
+                        <Text style={{ fontSize: 8, textAlign: 'center', marginTop: 8 }}>
                             Operator: **Name** - Lic #: **number**
                         </Text>
                     </View>

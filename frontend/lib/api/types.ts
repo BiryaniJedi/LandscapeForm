@@ -187,6 +187,29 @@ export interface ShrubForm {
 /**
  * LawnForm - matches backend LawnFormResponse exactly
  * Contains all form fields with all lawn form specific fields
+ *
+ * 
+ *  id: string;
+ *  created_by: string;
+ *  created_at: string;
+ *  updated_at: string;
+ *  form_type: 'shrub' | 'lawn';
+ *  first_name: string;
+ *  last_name: string;
+ *  street_number: string;
+ *  street_name: string;
+ *  town: string;
+ *  zip_code: string;
+ *  home_phone: string;
+ *  other_phone: string;
+ *  call_before: boolean;
+ *  is_holiday: boolean;
+ *  first_app_date: string;
+ *  last_app_date: string;
+ *  // Lawn-specific fields
+ *  lawn_area_sq_ft: number;
+ *  fert_only: boolean;
+ *  pest_apps: PesticideApplicationResponse[];
  */
 export interface LawnForm {
     id: string;

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formsClient } from '@/lib/api/forms';
 import { chemicalsClient } from '@/lib/api/chemicals';
 import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
+import { formatDate } from '@/lib/common/dateFormat'
 
 export default function ListFormsPage() {
     const router = useRouter();
@@ -46,7 +47,6 @@ export default function ListFormsPage() {
 
     // Chemical filtering
     const [chemicals, setChemicals] = useState<Chemical[]>([]);
-    const [selectedChemicalIds, setSelectedChemicalIds] = useState<number[]>([]);
     const [selectedChemicalDropdown, setSelectedChemicalDropdown] = useState<string>('');
     const [chemicalsFilter, setChemicalsFilter] = useState<number[]>([]);
     const [chemicalsFilterInput, setChemicalsFilterInput] = useState<number[]>([]);
@@ -54,8 +54,9 @@ export default function ListFormsPage() {
     useEffect(() => {
         const fetchChemicals = async () => {
             try {
-                const data = await chemicalsClient.listChemicals();
-                setChemicals(data.chemicals);
+                const lawnChems = await chemicalsClient.listChemicals('lawn');
+                const shrubChems = await chemicalsClient.listChemicals('shrub');
+                setChemicals([...lawnChems.chemicals, ...shrubChems.chemicals]);
             } catch (err) {
                 console.error('Failed to load chemicals:', err);
             }
@@ -78,7 +79,7 @@ export default function ListFormsPage() {
                         date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
                         zip_code: zipCode || null,
                         jewish_holiday: jewishHoliday || null,
-                        chemical_ids: selectedChemicalIds.length > 0 ? selectedChemicalIds : null,
+                        chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
                     }
                 );
                 setFormviewList(data);
@@ -98,20 +99,30 @@ export default function ListFormsPage() {
         };
 
         fetchForms();
-    }, [limit, offset, formType, searchName, sortBy, order, dateLow, dateHigh, zipCode, jewishHoliday, selectedChemicalIds]);
+    }, [limit, offset, formType, searchName, sortBy, order, dateLow, dateHigh, zipCode, jewishHoliday, chemicalsFilter]);
 
     const handleApplyFilters = () => {
         setSearchName(searchNameInput);
         setFormType(formTypeInput);
         setSortBy(sortByInput);
         setOrder(orderInput);
-        setDateLow(dateLowInput + 'T:00.00');
-        setDateHigh(dateHighInput + 'T:23:59');
+
+        let newDateStr = dateLowInput + 'T00:00';
+        if (verifyDateString(newDateStr)) {
+            console.log(`MATCHED newDateStr: ${newDateStr}`);
+            setDateLow(newDateStr);
+        }
+        newDateStr = dateHighInput + 'T23:59';
+        console.log(`HighDateStr: ${newDateStr}`);
+        if (verifyDateString(newDateStr)) {
+            console.log(`HIGH MATCHED newDateStr: ${newDateStr}`);
+            setDateHigh(newDateStr);
+        }
+
         setZipCode(zipCodeInput);
         setJewishHoliday(jewishHolidayInput);
+        setChemicalsFilter(chemicalsFilterInput);
         setOffset(0);
-        console.log(`date low: ${dateLow}\n`)
-        console.log(`date high: ${dateHigh}\n`)
     };
 
     const handleResetFilters = () => {
@@ -123,6 +134,7 @@ export default function ListFormsPage() {
         setDateHighInput('');
         setZipCodeInput('');
         setJewishHolidayInput('');
+        setChemicalsFilterInput([]);
         setSearchName('');
         setFormType('');
         setSortBy('created_at');
@@ -131,24 +143,30 @@ export default function ListFormsPage() {
         setDateHigh('');
         setZipCode('');
         setJewishHoliday('');
-        setSelectedChemicalIds([]);
+        setChemicalsFilter([]);
         setSelectedChemicalDropdown('');
         setOffset(0);
     };
 
     const handleAddChemical = () => {
-        if (selectedChemicalDropdown) {
-            const chemId = parseInt(selectedChemicalDropdown);
-            if (!selectedChemicalIds.includes(chemId)) {
-                setSelectedChemicalIds([...selectedChemicalIds, chemId]);
-            }
+        if (selectedChemicalDropdown && !chemicalsFilterInput.includes(parseInt(selectedChemicalDropdown))) {
+            setChemicalsFilterInput([...chemicalsFilterInput, parseInt(selectedChemicalDropdown)]);
             setSelectedChemicalDropdown('');
         }
     };
 
     const handleRemoveChemical = (chemId: number) => {
-        setSelectedChemicalIds(selectedChemicalIds.filter(id => id !== chemId));
+        setChemicalsFilterInput(chemicalsFilterInput.filter(id => id !== chemId));
     };
+
+    const verifyDateString = (newDateString: string): boolean => {
+        console.log("CALLED")
+        let newDate = new Date(newDateString);
+        if (isNaN(newDate.getTime()))
+            return false;
+        console.log("TRUE")
+        return true;
+    }
 
     const handleDeleteClick = (form: FormViewResponse) => {
         setFormToDelete(form);
@@ -181,7 +199,7 @@ export default function ListFormsPage() {
                 date_high: dateHigh ? new Date(dateHigh).toISOString() : null,
                 zip_code: zipCode || null,
                 jewish_holiday: jewishHoliday || null,
-                chemical_ids: selectedChemicalIds.length > 0 ? selectedChemicalIds : null,
+                chemical_ids: chemicalsFilter.length > 0 ? chemicalsFilter : null,
             });
             setFormviewList(data);
             setError(null);
@@ -322,57 +340,64 @@ export default function ListFormsPage() {
                                         <option value="ASC">Ascending</option>
                                     </select>
                                 </div>
+
                             </div>
 
-                            {/* Chemical Filter */}
-                            <div className="mb-4">
-                                <label htmlFor="chemicalFilter" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                    Filter by Chemical
+                            {/* Chemicals Filter - Full Width Row */}
+                            <div className="mt-4">
+                                <label htmlFor="chemicalsFilterInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Filter by Chemicals Used
                                 </label>
                                 <div className="flex gap-2">
                                     <select
-                                        id="chemicalFilter"
+                                        id="chemicalsFilterInput"
                                         value={selectedChemicalDropdown}
                                         onChange={(e) => setSelectedChemicalDropdown(e.target.value)}
                                         className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     >
                                         <option value="">Select a chemical...</option>
-                                        {chemicals.map(chem => (
+                                        {chemicals.map((chem) => (
                                             <option key={chem.id} value={chem.id}>
                                                 {chem.brand_name} - {chem.chemical_name} ({chem.category})
                                             </option>
                                         ))}
                                     </select>
                                     <button
+                                        type="button"
                                         onClick={handleAddChemical}
                                         disabled={!selectedChemicalDropdown}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Add
                                     </button>
                                 </div>
-
-                                {/* Selected Chemicals */}
-                                {selectedChemicalIds.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {selectedChemicalIds.map(chemId => {
+                                {chemicalsFilterInput.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {chemicalsFilterInput.map((chemId) => {
                                             const chem = chemicals.find(c => c.id === chemId);
-                                            if (!chem) return null;
-                                            return (
-                                                <div key={chemId} className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
-                                                    <span>{chem.brand_name} - {chem.chemical_name}</span>
+                                            return chem ? (
+                                                <div
+                                                    key={chemId}
+                                                    className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                >
+                                                    <span>{chem.brand_name}</span>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleRemoveChemical(chemId)}
-                                                        className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                                        className="hover:text-blue-600 dark:hover:text-blue-300"
                                                     >
                                                         ×
                                                     </button>
                                                 </div>
-                                            );
+                                            ) : null;
                                         })}
                                     </div>
                                 )}
-                                {/* Date Low*/}
+                            </div>
+
+                            {/* Additional Filters - Second Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                                {/* Date Low */}
                                 <div>
                                     <label htmlFor="dateLowInput" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                         Minimum First Application Date
@@ -431,7 +456,7 @@ export default function ListFormsPage() {
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-3 mt-4">
                                 <button
                                     onClick={handleApplyFilters}
                                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -460,46 +485,57 @@ export default function ListFormsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                 {formviewList.forms.map((formview: FormViewResponse) => (
                                     <div key={formview.id} className="bg-white dark:bg-zinc-900 rounded-lg shadow p-6">
-                                        <div className="flex justify-between items-start">
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                        Name
-                                                    </label>
-                                                    <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name} {formview.last_name}</p>
-                                                </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Name
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formview.first_name} {formview.last_name}</p>
+                                            </div>
 
-                                                <div>
-                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                        Address
-                                                    </label>
-                                                    <p className="text-zinc-900 dark:text-zinc-50">
-                                                        {formview.street_number} {formview.street_name}
-                                                    </p>
-                                                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Address
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">
+                                                    {formview.street_number} {formview.street_name}
+                                                </p>
+                                            </div>
 
-                                                <div>
-                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                        Location
-                                                    </label>
-                                                    <p className="text-zinc-900 dark:text-zinc-50">
-                                                        {formview.town}, {formview.zip_code}
-                                                    </p>
-                                                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Location
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">
+                                                    {formview.town}, {formview.zip_code}
+                                                </p>
+                                            </div>
 
-                                                <div>
-                                                    <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                                                        Form Type
-                                                    </label>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formview.form_type === 'shrub'
-                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                        }`}>
-                                                        {formview.form_type}
-                                                    </span>
-                                                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                                                    Form Type
+                                                </label>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${formview.form_type === 'shrub'
+                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                    }`}>
+                                                    {formview.form_type}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                    First Pesticide Application Date
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(formview.first_app_date)}</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                                                    Last Pesticide Application Date
+                                                </label>
+                                                <p className="text-zinc-900 dark:text-zinc-50">{formatDate(formview.last_app_date)}</p>
                                             </div>
                                         </div>
+
                                         <div className="flex gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
                                             <button
                                                 onClick={() => router.push(`/forms/${formview.form_type}/${formview.id}`)}

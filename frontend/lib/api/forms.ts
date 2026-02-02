@@ -173,19 +173,19 @@ export class FormsClient extends ApiClient {
      * @throws {AuthError} If the user is not authenticated
      * @throws {FormServerError} If the server encounters an unexpected error
      */
-    async listFormsByUserId(params: ListFormsParams): Promise<ListFormsResponse> {
+    async listFormsByUserId(params?: ListFormsParams): Promise<ListFormsResponse> {
         const queryParams = new URLSearchParams()
-        if (params.limit != null) queryParams.append('limit', params.limit.toString())
-        if (params.offset != null) queryParams.append('offset', params.offset.toString())
-        if (params.form_type) queryParams.append('type', params.form_type)
-        if (params.search_name) queryParams.append('search', params.search_name)
-        if (params.sort_by) queryParams.append('sort_by', params.sort_by)
-        if (params.order) queryParams.append('order', params.order)
-        if (params.date_low) queryParams.append('date_low', params.date_low)
-        if (params.date_high) queryParams.append('date_high', params.date_high)
-        if (params.zip_code) queryParams.append('zip_code', params.zip_code)
-        if (params.jewish_holiday) queryParams.append('jewish_holiday', params.jewish_holiday)
-        if (params.chemical_ids && params.chemical_ids.length > 0) {
+        if (params?.limit != null) queryParams.append('limit', params.limit.toString())
+        if (params?.offset != null) queryParams.append('offset', params.offset.toString())
+        if (params?.form_type) queryParams.append('type', params.form_type)
+        if (params?.search_name) queryParams.append('search', params.search_name)
+        if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
+        if (params?.order) queryParams.append('order', params.order)
+        if (params?.date_low) queryParams.append('date_low', params.date_low)
+        if (params?.date_high) queryParams.append('date_high', params.date_high)
+        if (params?.zip_code) queryParams.append('zip_code', params.zip_code)
+        if (params?.jewish_holiday) queryParams.append('jewish_holiday', params.jewish_holiday)
+        if (params?.chemical_ids && params.chemical_ids.length > 0) {
             queryParams.append('chemicals', params.chemical_ids.join(','))
         }
 
@@ -219,6 +219,8 @@ export class FormsClient extends ApiClient {
         if (params?.search_name) queryParams.append('search', params.search_name)
         if (params?.sort_by) queryParams.append('sort_by', params.sort_by)
         if (params?.order) queryParams.append('order', params.order)
+        if (params?.date_low) queryParams.append('date_low', params.date_low)
+        if (params?.date_high) queryParams.append('date_high', params.date_high)
         if (params?.chemical_ids && params.chemical_ids.length > 0) {
             console.log('[API Client] Adding chemicals to query:', params.chemical_ids)
             queryParams.append('chemicals', params.chemical_ids.join(','))
