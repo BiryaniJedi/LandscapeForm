@@ -19,6 +19,7 @@ frontend/out/
 
 # Planning docs (personal)
 modules.md
+RUST_DB_BACKUP_LEARNING_PLAN.md
 
 CLAUDE.md
 TODO.md
