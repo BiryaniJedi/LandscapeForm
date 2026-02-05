@@ -6,7 +6,8 @@ import (
 	"runtime/debug"
 )
 
-// Recovery recovers from panics and returns a 500 Internal Server Error
+// Recovery recovers from panics and returns a 500 Internal Server Error.
+// Logs the panic message and stack trace before responding to the client.
 func Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

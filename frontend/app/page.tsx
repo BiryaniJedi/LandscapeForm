@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
 import Link from 'next/link';
 
+/**
+ * Home Page
+ *
+ * Landing page that redirects authenticated users to dashboard.
+ * Shows login/register options for unauthenticated users.
+ */
 export default function Home() {
     const router = useRouter();
     const { isAuthenticated, isLoading } = useAuth();

@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     description: "Forms management system for landscaping company",
 };
 
+/**
+ * Root Layout
+ *
+ * Application root layout with authentication provider and global styles.
+ * Configures fonts and wraps all pages with auth context.
+ */
 export default function RootLayout({
     children,
 }: Readonly<{

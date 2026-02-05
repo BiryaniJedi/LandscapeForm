@@ -7,6 +7,16 @@ import { chemicalsClient } from '@/lib/api/chemicals';
 import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
 import { formatDate } from '@/lib/common/dateFormat'
 
+/**
+ * Forms List Page
+ *
+ * Displays user's pesticide application forms with filtering and sorting.
+ * Key features:
+ * - Filter by form type, date range, chemicals, and zip code
+ * - Sort by various fields
+ * - Pagination support
+ * - Delete forms with confirmation
+ */
 export default function ListFormsPage() {
     const router = useRouter();
 

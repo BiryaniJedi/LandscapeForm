@@ -36,7 +36,7 @@ func getUserID(r *http.Request) string {
 	return "00000000-0000-0000-0000-000000000001"
 }
 
-// CreateShrubForm handles POST /api/forms/shrub
+// CreateShrubForm creates a new shrub pesticide application form. Returns the created form ID upon success.
 func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
@@ -46,11 +46,6 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add validation
-	// - Check required fields are not empty
-	// - Validate phone number format
-
-	// Convert applications from request to domain model
 	var applications []forms.PestApp
 	for _, appReq := range req.Applications {
 		appTime, err := time.Parse(time.RFC3339, appReq.AppTimestamp)
@@ -93,7 +88,7 @@ func (h *FormsHandler) CreateShrubForm(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, CreateFormResponse{shrubFormId})
 }
 
-// CreateLawnForm handles POST /api/forms/lawn
+// CreateLawnForm creates a new lawn pesticide application form. Returns the created form ID upon success.
 func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
@@ -103,12 +98,6 @@ func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add validation
-	// - Check required fields are not empty
-	// - Validate phone number format
-	// - Validate lawn_area_sq_ft > 0
-
-	// Convert applications from request to domain model
 	var applications []forms.PestApp
 	for _, appReq := range req.Applications {
 		appTime, err := time.Parse(time.RFC3339, appReq.AppTimestamp)
@@ -156,7 +145,6 @@ func (h *FormsHandler) CreateLawnForm(w http.ResponseWriter, r *http.Request) {
 func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
-	// Parse query parameters
 	opts := parseListFormsOptions(r)
 
 	views, err := h.repo.ListFormsByUserId(r.Context(), userID, opts)
@@ -165,7 +153,6 @@ func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to response format
 	formResponses := make([]FormViewResponse, 0, len(views))
 	for _, view := range views {
 		formResponses = append(formResponses, formViewToResponse(view))
@@ -179,7 +166,6 @@ func (h *FormsHandler) ListForms(w http.ResponseWriter, r *http.Request) {
 
 // ListAllForms handles GET /api/admin/forms - returns ALL forms from all users (admin only)
 func (h *FormsHandler) ListAllForms(w http.ResponseWriter, r *http.Request) {
-	// Parse query parameters
 	opts := parseListFormsOptions(r)
 
 	views, err := h.repo.ListAllForms(r.Context(), opts)
@@ -188,7 +174,6 @@ func (h *FormsHandler) ListAllForms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to response format
 	formResponses := make([]FormViewResponse, 0, len(views))
 	for _, view := range views {
 		formResponses = append(formResponses, formViewToResponse(view))

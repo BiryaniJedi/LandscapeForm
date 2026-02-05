@@ -7,6 +7,12 @@ import { chemicalsClient } from '@/lib/api/chemicals';
 import { Chemical, PesticideApplication } from '@/lib/api/types';
 import { siteCodesFirst, siteCodesSecond } from '@/lib/common/siteCodes';
 
+/**
+ * Create Lawn Form Page
+ *
+ * Form for creating new lawn pesticide application records.
+ * Includes customer information and multiple pesticide applications.
+ */
 export default function CreateLawnFormPage() {
     const router = useRouter();
     const [chemicals, setChemicals] = useState<Chemical[]>([]);

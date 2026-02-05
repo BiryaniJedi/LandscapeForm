@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { usersClient } from '@/lib/api/users';
 import { User } from '@/lib/api/types';
 
+/**
+ * Admin Users Page
+ *
+ * Admin interface for managing user accounts.
+ * Key features:
+ * - View all users
+ * - Approve pending registrations
+ * - Delete user accounts
+ */
 export default function AdminUsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);

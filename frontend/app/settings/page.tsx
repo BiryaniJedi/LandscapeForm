@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/api/auth';
 import { User } from '@/lib/api/types';
 
+/**
+ * User Settings Page
+ *
+ * User profile management and account settings.
+ * Allows users to update personal information and change password.
+ */
 export default function SettingsPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);

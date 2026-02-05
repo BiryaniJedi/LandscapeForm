@@ -7,6 +7,12 @@ import { chemicalsClient } from '@/lib/api/chemicals';
 import { ListFormsResponse, FormViewResponse, AuthError, Chemical } from '@/lib/api/types';
 import { formatDate } from '@/lib/common/dateFormat'
 
+/**
+ * Admin All Forms Page
+ *
+ * Admin view for all pesticide application forms across all users.
+ * Includes filtering, sorting, and search capabilities.
+ */
 export default function ListFormsAllUsersPage() {
     const router = useRouter();
 

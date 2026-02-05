@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/components/auth';
 
+/**
+ * Registration Page
+ *
+ * New user account registration form.
+ * Requires admin approval before account activation.
+ */
 export default function RegisterPage() {
     const router = useRouter();
     const { register } = useAuth();

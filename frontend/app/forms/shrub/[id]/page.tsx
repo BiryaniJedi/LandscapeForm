@@ -6,6 +6,12 @@ import { formsClient } from '@/lib/api/forms';
 import { ShrubForm } from '@/lib/api/types';
 import { formatDate } from '@/lib/common/dateFormat'
 
+/**
+ * Edit Shrub Form Page
+ *
+ * View and edit existing shrub pesticide application form.
+ * Displays form details and application history.
+ */
 export default function ShrubFormDetailPage() {
     const router = useRouter();
     const params = useParams();

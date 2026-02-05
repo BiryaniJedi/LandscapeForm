@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
+/**
+ * View Form Page
+ *
+ * Displays a single form's details. Currently redirects to print preview.
+ */
 export default function ViewFormPage() {
     const router = useRouter();
     const params = useParams();

@@ -293,13 +293,12 @@ func (r *UsersRepository) ListUsers(
 }
 
 // UpdateUserById updates a user and its associated subtype fields.
-// It returns sql.ErrNoRows if the user does not exist or
+// It returns sql.ErrNoRows if the user does not exist.
 func (r *UsersRepository) UpdateUserById(
 	ctx context.Context,
 	userID string,
 	userInput UpdateUserInput,
 ) (UserRepResponse, error) {
-	// TODO auth
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return UserRepResponse{}, err
@@ -358,12 +357,11 @@ func (r *UsersRepository) UpdateUserById(
 }
 
 // DeleteUserById deletes a user.
-// It returns sql.ErrNoRows if the user does not exist
+// It returns sql.ErrNoRows if the user does not exist.
 func (r *UsersRepository) DeleteUserById(
 	ctx context.Context,
 	userID string,
 ) (string, error) {
-	// TODO: Auth
 	var deletedUserId string
 	err := r.db.QueryRowContext(ctx, `
 		DELETE FROM users 

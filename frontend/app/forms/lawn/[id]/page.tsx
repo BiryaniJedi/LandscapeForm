@@ -6,6 +6,12 @@ import { formsClient } from '@/lib/api/forms';
 import { LawnForm } from '@/lib/api/types';
 import { formatDate } from '@/lib/common/dateFormat'
 
+/**
+ * Edit Lawn Form Page
+ *
+ * View and edit existing lawn pesticide application form.
+ * Displays form details and application history.
+ */
 export default function LawnFormDetailPage() {
     const router = useRouter();
     const params = useParams();

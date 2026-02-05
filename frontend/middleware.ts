@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * Next.js middleware for route protection.
+ * Redirects unauthenticated users to login page when accessing protected routes.
+ * Protected routes include /forms, /dashboard, and /admin paths.
+ *
+ * @param req - The incoming request
+ * @returns Redirect response to login page or allows request to continue
+ */
 export function middleware(req: NextRequest) {
     const token = req.cookies.get('auth_token')?.value;
     const pathname = req.nextUrl.pathname;

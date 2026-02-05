@@ -6,6 +6,12 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/components/auth';
 import { AuthError } from '@/lib/api/types';
 
+/**
+ * Login Page
+ *
+ * User authentication page with username and password login.
+ * Redirects to dashboard upon successful authentication.
+ */
 export default function LoginPage() {
     const router = useRouter();
     const { login } = useAuth();

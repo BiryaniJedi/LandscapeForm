@@ -4,6 +4,12 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/components/auth';
 
+/**
+ * Dashboard Page
+ *
+ * Main user dashboard with quick access to forms and navigation.
+ * Displays user information and account status.
+ */
 export default function DashboardPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading, logout, } = useAuth();

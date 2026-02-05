@@ -2,8 +2,8 @@ package middleware
 
 import "net/http"
 
-// CORS adds CORS headers to allow frontend access
-// TODO: Configure allowed origins based on environment
+// CORS adds CORS headers to allow frontend access. Currently configured for localhost:3000 development.
+// Production deployment should use environment variable for allowed origins configuration.
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")

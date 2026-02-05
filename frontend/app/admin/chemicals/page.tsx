@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { chemicalsClient } from '@/lib/api/chemicals';
 import { Chemical, CreateChemicalRequest } from '@/lib/api/types';
 
+/**
+ * Admin Chemicals Page
+ *
+ * Admin interface for managing pesticide chemicals database.
+ * Key features:
+ * - Create, update, and delete chemicals
+ * - Filter by category (lawn/shrub)
+ * - Manage brand names, EPA numbers, and active ingredients
+ */
 export default function AdminChemicalsPage() {
     const router = useRouter();
     const [chemicals, setChemicals] = useState<Chemical[]>([]);

@@ -16,6 +16,12 @@ const PDFViewer = dynamic(
 // Import the PDF document component
 import FormPDFDocument from '@/lib/pdf/FormPDFDocument';
 
+/**
+ * Print Form Page
+ *
+ * PDF preview and print page for pesticide application forms.
+ * Generates a printable PDF document using React PDF.
+ */
 export default function PrintFormPage() {
     const params = useParams();
     const router = useRouter();
