@@ -51,7 +51,7 @@ CREATE TABLE chemicals (
 CREATE TABLE pesticide_applications (
     id SMALLSERIAL PRIMARY KEY,
     form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
-    chem_used SMALLINT NOT NULL REFERENCES chemicals(id),
+    chem_used SMALLINT NOT NULL REFERENCES chemicals(id) ON DELETE CASCADE,
     app_timestamp TIMESTAMPTZ NOT NULL,
     rate TEXT NOT NULL,
     amount_applied NUMERIC(10, 2) NOT NULL,
